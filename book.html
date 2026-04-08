@@ -1,0 +1,2080 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="book-icon.png">
+<title>Bumble Bee Blinds — Property Assessment</title>
+<style>
+  :root {
+    --buttercup: #f0a616;
+    --coffee: #24150e;
+    --gin-fizz: #fff9e5;
+    --chino: #cbc1a0;
+    --success: #4caf50;
+    --error: #e53935;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--gin-fizz);
+    color: var(--coffee);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: var(--coffee);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header h1 {
+    color: var(--buttercup);
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .header .bee-icon { height: 36px; width: auto; }
+  .booking-count {
+    background: var(--buttercup);
+    color: var(--coffee);
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 14px;
+  }
+
+  /* ── Admin Bar ── */
+  .admin-bar {
+    background: var(--coffee);
+    padding: 8px 24px 12px;
+    display: none;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .admin-bar.visible { display: flex; }
+  .admin-btn {
+    background: var(--buttercup);
+    color: var(--coffee);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .admin-btn:active { opacity: 0.8; }
+  .admin-btn.danger { background: var(--error); color: #fff; }
+  .admin-status {
+    color: var(--buttercup);
+    font-size: 13px;
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  /* ── Sync Indicator ── */
+  .sync-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--success);
+    display: inline-block;
+    margin-right: 4px;
+    transition: background 0.3s;
+  }
+  .sync-dot.syncing { background: var(--buttercup); animation: pulse 0.8s infinite; }
+  .sync-dot.offline { background: var(--error); }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .sync-status {
+    font-size: 11px;
+    color: var(--chino);
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+  .offline-badge {
+    background: var(--error);
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    display: none;
+  }
+  .offline-badge.visible { display: inline-block; }
+
+  /* ── Booking List Modal ── */
+  .booking-list-item {
+    padding: 12px 0;
+    border-bottom: 1px solid #f0ebe3;
+    font-size: 14px;
+  }
+  .booking-list-item:last-child { border-bottom: none; }
+  .booking-list-item .bl-date {
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--coffee);
+  }
+  .booking-list-item .bl-name {
+    font-weight: 600;
+    color: var(--coffee);
+  }
+  .booking-list-item .bl-detail {
+    color: #7a6e5f;
+    font-size: 13px;
+    margin-top: 2px;
+  }
+
+  /* ── Container ── */
+  .container {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 16px 24px 20px;
+  }
+
+  /* ── Progress Bar ── */
+  .progress {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 16px;
+  }
+  .step-dot {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--chino);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    transition: all 0.3s;
+    flex-shrink: 0;
+  }
+  .step-dot.active { background: var(--buttercup); color: var(--coffee); transform: scale(1.15); }
+  .step-dot.done { background: var(--success); }
+  .step-line {
+    width: 36px; height: 3px;
+    background: var(--chino);
+    transition: background 0.3s;
+    flex-shrink: 0;
+  }
+  .step-line.done { background: var(--success); }
+
+  /* ── Screens ── */
+  .screen { display: none; animation: fadeIn 0.3s ease; }
+  .screen.active { display: flex; flex-direction: column; min-height: calc(100dvh - 92px); }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+  .screen-title {
+    font-size: 34px;
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+  .screen-sub {
+    text-align: center;
+    color: #7a6e5f;
+    font-size: 20px;
+    margin-bottom: 16px;
+  }
+
+  /* ── Welcome Screen ── */
+  .welcome-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: calc(100dvh - 60px);
+    text-align: center;
+    padding: 20px 24px;
+  }
+  .welcome-logo { max-width: 340px; width: 60%; margin-bottom: 20px; }
+  .welcome-title {
+    font-size: 42px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    color: var(--coffee);
+  }
+  .welcome-sub {
+    font-size: 24px;
+    color: #7a6e5f;
+    margin-bottom: 32px;
+    line-height: 1.4;
+  }
+  .welcome-cta {
+    padding: 24px 80px;
+    font-size: 28px;
+    border-radius: 20px;
+  }
+
+  /* ── Form Fields ── */
+  .field { margin-bottom: 10px; }
+  .field label {
+    display: block;
+    font-weight: 600;
+    font-size: 18px;
+    margin-bottom: 4px;
+    color: var(--coffee);
+  }
+  .field input, .field select, .field textarea {
+    width: 100%;
+    padding: 14px 18px;
+    border: 2px solid var(--chino);
+    border-radius: 14px;
+    font-size: 20px;
+    background: #fff;
+    color: var(--coffee);
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+    font-family: inherit;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    outline: none;
+    border-color: var(--buttercup);
+  }
+  .field input.error, .field select.error, .field textarea.error { border-color: var(--error); }
+  .field textarea {
+    resize: vertical;
+    min-height: 80px;
+    font-size: 18px;
+    line-height: 1.4;
+  }
+  .error-msg {
+    color: var(--error);
+    font-size: 12px;
+    margin-top: 4px;
+    display: none;
+  }
+
+  /* ── Date Picker ── */
+  .date-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .day-header {
+    text-align: center;
+    font-weight: 700;
+    font-size: 13px;
+    color: #7a6e5f;
+    padding: 4px 0;
+  }
+  .date-cell {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: 600;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .date-cell.available {
+    background: #fff;
+    border-color: var(--chino);
+  }
+  .date-cell.available:active { transform: scale(0.95); }
+  .date-cell.selected {
+    background: var(--buttercup);
+    border-color: var(--buttercup);
+    color: var(--coffee);
+  }
+  .date-cell.unavailable {
+    color: #ccc;
+    cursor: not-allowed;
+  }
+  .date-cell.past {
+    color: #ddd;
+    cursor: not-allowed;
+  }
+  .date-cell .date-month {
+    font-size: 9px;
+    font-weight: 400;
+    color: #7a6e5f;
+    margin-top: 1px;
+  }
+  .date-cell.selected .date-month { color: var(--coffee); }
+
+  /* ── Time Slots ── */
+  .time-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex: 1;
+  }
+  .time-slot {
+    background: #fff;
+    border: 2px solid var(--chino);
+    border-radius: 14px;
+    padding: 28px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+    -webkit-user-select: none;
+    font-size: 20px;
+    font-weight: 600;
+  }
+  .time-slot.selected {
+    border-color: var(--buttercup);
+    background: #fef7e0;
+    box-shadow: 0 0 0 2px var(--buttercup);
+  }
+  .time-slot.booked {
+    background: #f5f5f5;
+    color: #bbb;
+    border-color: #eee;
+    cursor: not-allowed;
+    text-decoration: line-through;
+  }
+  .time-slot:active:not(.booked) { transform: scale(0.97); }
+  .time-slot .slot-label {
+    font-size: 12px;
+    color: #7a6e5f;
+    font-weight: 400;
+    margin-top: 2px;
+  }
+  .time-slot.selected .slot-label { color: var(--coffee); }
+
+  /* ── Product Grid ── */
+  .product-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex: 1;
+  }
+  .product-card {
+    background: #fff;
+    border: 2px solid var(--chino);
+    border-radius: 16px;
+    padding: 14px 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .product-card.selected {
+    border-color: var(--buttercup);
+    background: #fef7e0;
+    box-shadow: 0 0 0 2px var(--buttercup);
+  }
+  .product-card:active { transform: scale(0.97); }
+  .product-icon { margin-bottom: 6px; color: var(--coffee); }
+  .product-icon svg { width: 42px; height: 42px; }
+  .product-card.selected .product-icon { color: var(--buttercup); }
+  .product-name { font-weight: 700; font-size: 17px; line-height: 1.2; }
+  .product-desc { font-size: 13px; color: #7a6e5f; margin-top: 4px; }
+
+  /* ── Tap Grid (single-select cards) ── */
+  .tap-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .tap-card {
+    background: #fff;
+    border: 2px solid var(--chino);
+    border-radius: 14px;
+    padding: 14px 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+    -webkit-user-select: none;
+    font-weight: 600;
+    font-size: 17px;
+    color: var(--coffee);
+  }
+  .tap-card.selected {
+    border-color: var(--buttercup);
+    background: #fef7e0;
+    box-shadow: 0 0 0 2px var(--buttercup);
+  }
+  .tap-card:active { transform: scale(0.97); }
+
+  /* ── Section Label ── */
+  .section-label {
+    font-weight: 700;
+    font-size: 18px;
+    margin-bottom: 6px;
+    color: var(--coffee);
+  }
+
+  /* ── Blocked Dates Section ── */
+  .blocked-section {
+    background: rgba(0,0,0,0.03);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-top: 8px;
+  }
+  .blocked-section h3 {
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+  .blocked-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .blocked-tag {
+    background: var(--error);
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .blocked-tag .remove {
+    cursor: pointer;
+    font-size: 14px;
+    opacity: 0.8;
+  }
+
+  /* ── Buttons ── */
+  .btn-primary {
+    width: 100%;
+    padding: 16px;
+    background: var(--buttercup);
+    color: var(--coffee);
+    border: none;
+    border-radius: 16px;
+    font-size: 22px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+  .btn-primary:active { transform: scale(0.98); opacity: 0.9; }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-secondary {
+    width: 100%;
+    padding: 14px;
+    background: transparent;
+    color: var(--coffee);
+    border: 2px solid var(--chino);
+    border-radius: 16px;
+    font-size: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+
+  /* ── Confirmation ── */
+  .confirm-box {
+    background: #fff;
+    border: 2px solid var(--chino);
+    border-radius: 16px;
+    padding: 24px;
+    margin: 16px 0;
+  }
+  .confirm-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0ebe3;
+    font-size: 17px;
+  }
+  .confirm-row:last-child { border-bottom: none; }
+  .confirm-label { color: #7a6e5f; font-weight: 500; }
+  .confirm-value { font-weight: 700; text-align: right; max-width: 60%; }
+  .confirm-row.notes-row {
+    flex-direction: column;
+    gap: 4px;
+  }
+  .confirm-row.notes-row .confirm-value {
+    text-align: left;
+    max-width: 100%;
+    font-weight: 500;
+    font-size: 15px;
+    color: #5a5044;
+    font-style: italic;
+  }
+
+  /* ── Thank You ── */
+  .thankyou-bee { width: 100px; margin: 0 auto 12px; display: block; }
+  .thankyou-box {
+    background: var(--coffee);
+    border-radius: 18px;
+    padding: 28px 24px;
+    text-align: center;
+    margin: 16px 0;
+  }
+  .thankyou-label {
+    color: var(--buttercup);
+    font-size: 16px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+  .thankyou-datetime {
+    color: #fff;
+    font-size: 28px;
+    font-weight: 800;
+    margin: 8px 0;
+    line-height: 1.3;
+  }
+  .thankyou-detail {
+    color: var(--chino);
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  .thankyou-products {
+    color: var(--buttercup);
+    font-size: 15px;
+    font-weight: 600;
+    margin-top: 8px;
+  }
+  .thankyou-text {
+    text-align: center;
+    font-size: 18px;
+    color: #7a6e5f;
+    line-height: 1.5;
+    margin-bottom: 16px;
+  }
+
+  /* ── Checkmark Animation ── */
+  .checkmark-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: var(--success);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    animation: scaleIn 0.4s ease;
+  }
+  .checkmark-circle svg {
+    width: 44px;
+    height: 44px;
+    stroke: #fff;
+    stroke-width: 3;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .checkmark-circle svg .checkmark-path {
+    stroke-dasharray: 60;
+    stroke-dashoffset: 60;
+    animation: drawCheck 0.5s 0.3s ease forwards;
+  }
+  @keyframes scaleIn { from { transform: scale(0); } to { transform: scale(1); } }
+  @keyframes drawCheck { to { stroke-dashoffset: 0; } }
+
+  /* ── No slots message ── */
+  .no-slots {
+    text-align: center;
+    padding: 40px 20px;
+    color: #7a6e5f;
+    font-size: 18px;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--coffee);
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    z-index: 200;
+    transition: transform 0.3s ease;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── Responsive: Small ── */
+  @media (max-height: 600px) {
+    .welcome-logo { max-width: 180px; margin-bottom: 10px; }
+    .welcome-title { font-size: 28px; }
+    .welcome-sub { font-size: 16px; margin-bottom: 16px; }
+    .welcome-cta { padding: 14px 50px; font-size: 20px; }
+    .screen-title { font-size: 24px; }
+    .screen-sub { font-size: 14px; margin-bottom: 8px; }
+    .field label { font-size: 14px; }
+    .field input, .field select, .field textarea { padding: 10px 14px; font-size: 16px; }
+    .field textarea { min-height: 60px; font-size: 14px; }
+    .date-cell { font-size: 14px; }
+    .time-slot { padding: 16px 10px; font-size: 16px; }
+    .product-card { padding: 10px 8px; }
+    .product-icon svg { width: 28px; height: 28px; }
+    .product-name { font-size: 13px; }
+    .product-desc { font-size: 10px; }
+    .product-grid { gap: 6px; margin-bottom: 8px; }
+    .tap-grid { gap: 6px; margin-bottom: 8px; }
+    .tap-card { padding: 10px 8px; font-size: 13px; }
+    .section-label { font-size: 14px; margin-bottom: 4px; }
+    .btn-primary { padding: 12px; font-size: 18px; }
+    .btn-secondary { padding: 10px; font-size: 16px; }
+    .container { padding: 8px 16px 12px; }
+    .step-dot { width: 22px; height: 22px; font-size: 10px; }
+    .step-line { width: 16px; }
+  }
+
+  /* ── Responsive: Medium ── */
+  @media (min-height: 601px) and (max-height: 850px) {
+    .welcome-logo { max-width: 260px; }
+    .welcome-title { font-size: 34px; }
+    .welcome-sub { font-size: 20px; }
+    .welcome-cta { padding: 18px 60px; font-size: 24px; }
+    .field input, .field select, .field textarea { padding: 12px 16px; font-size: 18px; }
+    .time-slot { padding: 20px 12px; font-size: 18px; }
+    .product-icon svg { width: 34px; height: 34px; }
+    .product-name { font-size: 15px; }
+    .product-desc { font-size: 12px; }
+    .tap-card { font-size: 15px; padding: 12px 10px; }
+    .section-label { font-size: 16px; }
+    .step-dot { width: 26px; height: 26px; font-size: 11px; }
+    .step-line { width: 20px; }
+  }
+
+  /* ── Responsive: Large ── */
+  @media (min-height: 1100px) {
+    .welcome-logo { max-width: 420px; }
+    .welcome-title { font-size: 52px; }
+    .welcome-sub { font-size: 28px; margin-bottom: 48px; }
+    .welcome-cta { padding: 28px 100px; font-size: 32px; }
+    .screen-title { font-size: 42px; }
+    .screen-sub { font-size: 24px; }
+    .field label { font-size: 22px; }
+    .field input, .field select, .field textarea { padding: 20px 22px; font-size: 24px; }
+    .field textarea { min-height: 100px; }
+    .date-cell { font-size: 22px; }
+    .time-slot { padding: 32px 20px; font-size: 24px; }
+    .product-card { padding: 24px 16px; }
+    .product-icon svg { width: 56px; height: 56px; }
+    .product-name { font-size: 22px; }
+    .product-desc { font-size: 16px; }
+    .product-grid { gap: 16px; }
+    .tap-grid { gap: 12px; }
+    .tap-card { padding: 20px 16px; font-size: 22px; }
+    .section-label { font-size: 22px; margin-bottom: 8px; }
+    .btn-primary { padding: 22px; font-size: 26px; }
+    .btn-secondary { padding: 18px; font-size: 22px; }
+    .container { max-width: 800px; }
+    .step-dot { width: 34px; height: 34px; font-size: 15px; }
+    .step-line { width: 28px; height: 4px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div style="display:flex;align-items:center;gap:10px;">
+    <img src="bee-icon.png" class="bee-icon" alt="Bumble Bee Blinds">
+    <h1>BUMBLE BEE BLINDS</h1>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <div class="sync-status" id="syncStatus"><span class="sync-dot" id="syncDot"></span><span id="syncLabel">Synced</span></div>
+    <span class="offline-badge" id="offlineBadge">OFFLINE</span>
+    <span class="booking-count" id="bookingCount">0</span>
+    <button onclick="toggleAdmin()" style="background:none;border:none;color:var(--chino);font-size:20px;cursor:pointer;">&#9881;</button>
+  </div>
+</div>
+
+<!-- Admin Bar -->
+<div class="admin-bar" id="adminBar">
+  <button class="admin-btn" onclick="downloadCSV()">&#128229; CSV</button>
+  <button class="admin-btn" onclick="showBookingsModal()">&#128203; Bookings</button>
+  <button class="admin-btn" onclick="showBlockModal()">&#128683; Block</button>
+  <button class="admin-btn" onclick="showScriptModal()">&#128214; Setup</button>
+  <button class="admin-btn" onclick="retryOfflineQueue()">&#128259; Retry Queue</button>
+  <button class="admin-btn danger" onclick="confirmClear()">&#128465; Clear</button>
+  <div class="admin-status" id="adminStatus"></div>
+</div>
+
+<!-- Main Content -->
+<div class="container">
+
+  <!-- SCREEN 0: Welcome -->
+  <div class="screen active" id="screen-welcome">
+    <div class="welcome-screen">
+      <img src="logo-stacked.png" class="welcome-logo" alt="Bumble Bee Blinds">
+      <div class="welcome-title">Schedule a Property Assessment</div>
+      <div class="welcome-sub">
+        Free on-site walkthrough<br>for your community
+      </div>
+      <button class="btn-primary welcome-cta" onclick="startBooking()">Book Assessment</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 1: Pick a Date -->
+  <div class="screen" id="screen-date">
+    <div class="progress">
+      <div class="step-dot active">1</div>
+      <div class="step-line"></div>
+      <div class="step-dot">2</div>
+      <div class="step-line"></div>
+      <div class="step-dot">3</div>
+      <div class="step-line"></div>
+      <div class="step-dot">4</div>
+      <div class="step-line"></div>
+      <div class="step-dot">5</div>
+      <div class="step-line"></div>
+      <div class="step-dot">6</div>
+      <div class="step-line"></div>
+      <div class="step-dot">7</div>
+    </div>
+
+    <div class="screen-title">Pick a Date</div>
+    <div class="screen-sub">Next 30 days available</div>
+
+    <div class="date-grid" id="dateGrid"></div>
+
+    <button class="btn-primary" onclick="goToTime()" id="btnToTime" disabled>Select a Date</button>
+  </div>
+
+  <!-- SCREEN 2: Time Preference -->
+  <div class="screen" id="screen-time">
+    <div class="progress">
+      <div class="step-dot done">&#10003;</div>
+      <div class="step-line done"></div>
+      <div class="step-dot active">2</div>
+      <div class="step-line"></div>
+      <div class="step-dot">3</div>
+      <div class="step-line"></div>
+      <div class="step-dot">4</div>
+      <div class="step-line"></div>
+      <div class="step-dot">5</div>
+      <div class="step-line"></div>
+      <div class="step-dot">6</div>
+      <div class="step-line"></div>
+      <div class="step-dot">7</div>
+    </div>
+
+    <div class="screen-title" id="timeTitle">Time Preference</div>
+    <div class="screen-sub" id="timeSub"></div>
+
+    <div class="time-grid" id="timeGrid"></div>
+    <div class="no-slots" id="noSlots" style="display:none;">This date is no longer available.<br>Please go back and pick another day.</div>
+
+    <button class="btn-primary" onclick="goToContact()" id="btnToContact" disabled>Next &rarr;</button>
+    <button class="btn-secondary" onclick="showScreen('date')">&#8592; Back</button>
+  </div>
+
+  <!-- SCREEN 3: Contact Info -->
+  <div class="screen" id="screen-contact">
+    <div class="progress">
+      <div class="step-dot done">&#10003;</div>
+      <div class="step-line done"></div>
+      <div class="step-dot done">&#10003;</div>
+      <div class="step-line done"></div>
+      <div class="step-dot active">3</div>
+      <div class="step-line"></div>
+      <div class="step-dot">4</div>
+      <div class="step-line"></div>
+      <div class="step-dot">5</div>
+      <div class="step-line"></div>
+      <div class="step-dot">6</div>
+      <div class="step-line"></div>
+      <div class="step-dot">7</div>
+    </div>
+
+    <div class="screen-title">Contact Info</div>
+    <div class="screen-sub">So we can confirm your assessment</div>
+
+    <div class="field">
+      <label for="fname">First Name *</label>
+      <input type="text" id="fname" placeholder="First name" autocomplete="given-name" autocapitalize="words">
+      <div class="error-msg" id="fname-error">Please enter your first name</div>
+    </div>
+    <div class="field">
+      <label for="lname">Last Name *</label>
+      <input type="text" id="lname" placeholder="Last name" autocomplete="family-name" autocapitalize="words">
+      <div class="error-msg" id="lname-error">Please enter your last name</div>
+    </div>
+    <div class="field">
+      <label for="role">Title / Role *</label>
+      <select id="role">
+        <option value="">Select your role...</option>
+        <option value="Board President">Board President</option>
+        <option value="Board Member">Board Member</option>
+        <option value="Property Manager">Property Manager</option>
+        <option value="Community Manager">Community Manager</option>
+        <option value="Building Manager">Building Manager</option>
+        <option value="Homeowner">Homeowner</option>
+        <option value="Other">Other</option>
+      </select>
+      <div class="error-msg" id="role-error">Please select your role</div>
+    </div>
+    <div class="field" id="otherRoleField" style="display:none;">
+      <label for="otherRole">Your Role *</label>
+      <input type="text" id="otherRole" placeholder="Enter your title or role">
+      <div class="error-msg" id="otherRole-error">Please enter your role</div>
+    </div>
+    <div class="field">
+      <label for="communityName">Community / Association Name *</label>
+      <input type="text" id="communityName" placeholder="e.g. Sunset Towers HOA" autocapitalize="words">
+      <div class="error-msg" id="communityName-error">Please enter the community or association name</div>
+    </div>
+    <div class="field">
+      <label for="managementCompany">Management Company <span style="font-weight:400;color:#7a6e5f;">(optional)</span></label>
+      <input type="text" id="managementCompany" placeholder="e.g. FirstService Residential" autocapitalize="words">
+    </div>
+    <div class="field">
+      <label for="email">Email *</label>
+      <input type="email" id="email" placeholder="you@email.com" autocomplete="email" inputmode="email">
+      <div class="error-msg" id="email-error">Please enter a valid email (e.g. name@email.com)</div>
+    </div>
+    <div class="field">
+      <label for="phone">Phone *</label>
+      <input type="tel" id="phone" placeholder="(813) 555-1234" autocomplete="tel" inputmode="tel">
+      <div class="error-msg" id="phone-error">Please enter a valid 10-digit phone number</div>
+    </div>
+
+    <button class="btn-primary" onclick="goToProperty()">Next &rarr;</button>
+    <button class="btn-secondary" onclick="showScreen('time')">&#8592; Back</button>
+  </div>
+
+  <!-- SCREEN 4: Property Details -->
+  <div class="screen" id="screen-property">
+    <div class="progress">
+      <div class="step-dot done">&#10003;</div>
+      <div class="step-line done"></div>
+      <div class="step-dot done">&#10003;</div>
+      <div class="step-line done"></div>
+      <div class="step-dot done">&#10003;</div>
+      <div class="step-line done"></div>
+      <div class="step-dot active">4</div>
+      <div class="step-line"></div>
+      <div class="step-dot">5</div>
+      <div class="step-line"></div>
+      <div class="step-dot">6</div>
+      <div class="step-line"></div>
+      <div class="step-dot">7</div>
+    </div>
+
+    <div class="screen-title">Property Details</div>
+    <div class="screen-sub">Tell us about the community</div>
+
+    <div class="field">
+      <label for="propertyAddress">Property Address *</label>
+      <input type="text" id="propertyAddress" placeholder="123 Main St, Tampa, FL 33602" autocomplete="street-address">
+      <div class="error-msg" id="propertyAddress-error">Please enter the full property address (street, city, state, zip)</div>
+      <div id="addressHint" style="font-size:12px;color:var(--buttercup);margin-top:4px;display:none;font-weight:600;"></div>
+    </div>
+    <div class="field">
+      <label for="numUnits">Number of Units *</label>
+      <select id="numUnits">
+        <option value="">Select range...</option>
+        <option value="1-10">1 - 10</option>
+        <option value="11-25">11 - 25</option>
+        <option value="26-50">26 - 50</option>
+        <option value="51-100">51 - 100</option>
+        <option value="101-250">101 - 250</option>
+        <option value="250+">250+</option>
+      </select>
+      <div class="error-msg" id="numUnits-error">Please select the number of units</div>
+    </div>
+
+    <div class="section-label">Property Type</div>
+    <div class="tap-grid" id="propertyTypeGrid">
+      <div class="tap-card" onclick="selectSingle(this, 'propertyTypeGrid')" data-value="Condo">Condo</div>
+      <div class="tap-card" onclick="selectSingle(this, 'propertyTypeGrid')" data-value="Townhome">Townhome</div>
+      <div class="tap-card" onclick="selectSingle(this, 'propertyTypeGrid')" data-value="HOA Community">HOA Community</div>
+      <div class="tap-card" onclick="selectSingle(this, 'propertyTypeGrid')" data-value="Mixed-Use">Mixed-Use</div>
+      <div class="tap-card" onclick="selectSingle(this, 'propertyTypeGrid')" data-value="Senior Living">Senior Living</div>
+      <div class="tap-card" onclick="selectSingle(this, 'propertyTypeGrid')" data-value="Other">Other</div>
+    </div>
+
+    <div class="section-label">Products Interested In <span style="font-weight:400;color:#7a6e5f;">(tap all that apply)</span></div>
+    <div class="product-grid" id="productGrid">
+      <div class="product-card" onclick="toggleProduct(this)" data-product="Shutters">
+        <div class="product-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="6" y="4" width="36" height="40" rx="2"/><line x1="10" y1="12" x2="38" y2="12"/><line x1="10" y1="20" x2="38" y2="20"/><line x1="10" y1="28" x2="38" y2="28"/><line x1="10" y1="36" x2="38" y2="36"/><line x1="24" y1="4" x2="24" y2="44"/></svg></div>
+        <div class="product-name">Shutters</div>
+        <div class="product-desc">Plantation & composite</div>
+      </div>
+      <div class="product-card" onclick="toggleProduct(this)" data-product="Cellular Shades">
+        <div class="product-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="6" y="2" width="36" height="6" rx="1"/><path d="M10 14 L18 8 L26 14 L34 8 L38 11"/><path d="M10 14 L18 20 L26 14 L34 20 L38 17"/><path d="M10 22 L18 28 L26 22 L34 28 L38 25"/><path d="M10 22 L18 16 L26 22 L34 16 L38 19"/><path d="M10 30 L18 36 L26 30 L34 36 L38 33"/><path d="M10 30 L18 24 L26 30 L34 24 L38 27"/><line x1="10" y1="8" x2="10" y2="36"/><line x1="38" y1="8" x2="38" y2="36"/></svg></div>
+        <div class="product-name">Cellular Shades</div>
+        <div class="product-desc">Honeycomb insulation</div>
+      </div>
+      <div class="product-card" onclick="toggleProduct(this)" data-product="Roller Shades">
+        <div class="product-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="8" y="4" width="32" height="8" rx="4"/><rect x="10" y="12" width="28" height="28" rx="1"/><line x1="22" y1="40" x2="26" y2="40"/><circle cx="24" cy="43" r="2"/></svg></div>
+        <div class="product-name">Roller Shades</div>
+        <div class="product-desc">Solar, blackout & more</div>
+      </div>
+      <div class="product-card" onclick="toggleProduct(this)" data-product="Roman Shades">
+        <div class="product-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="6" y="2" width="36" height="6" rx="1"/><line x1="6" y1="8" x2="6" y2="44"/><line x1="42" y1="8" x2="42" y2="44"/><path d="M6 18 Q24 14 42 18"/><path d="M6 28 Q24 24 42 28"/><path d="M6 38 Q24 32 42 38"/><line x1="6" y1="44" x2="42" y2="44"/></svg></div>
+        <div class="product-name">Roman Shades</div>
+        <div class="product-desc">Elegant fabric folds</div>
+      </div>
+      <div class="product-card" onclick="toggleProduct(this)" data-product="Drapery">
+        <div class="product-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="4" x2="44" y2="4"/><path d="M8 4 Q6 24 10 44"/><path d="M16 4 Q12 20 14 44"/><path d="M8 4 Q12 16 16 4"/><path d="M32 4 Q36 20 34 44"/><path d="M40 4 Q42 24 38 44"/><path d="M32 4 Q36 16 40 4"/><circle cx="8" cy="4" r="2" fill="currentColor"/><circle cx="16" cy="4" r="2" fill="currentColor"/><circle cx="32" cy="4" r="2" fill="currentColor"/><circle cx="40" cy="4" r="2" fill="currentColor"/></svg></div>
+        <div class="product-name">Drapery</div>
+        <div class="product-desc">Custom drapes & curtains</div>
+      </div>
+      <div class="product-card" onclick="toggleProduct(this)" data-product="Outdoor Shades">
+        <div class="product-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="38" cy="10" r="5"/><line x1="38" y1="2" x2="38" y2="4"/><line x1="38" y1="16" x2="38" y2="18"/><line x1="30" y1="10" x2="32" y2="10"/><line x1="44" y1="10" x2="46" y2="10"/><rect x="4" y="6" width="28" height="4" rx="1"/><rect x="6" y="10" width="24" height="32" rx="1"/><line x1="6" y1="18" x2="30" y2="18"/><line x1="6" y1="26" x2="30" y2="26"/><line x1="6" y1="34" x2="30" y2="34"/></svg></div>
+        <div class="product-name">Outdoor Shades</div>
+        <div class="product-desc">Lanai & patio solutions</div>
+      </div>
+      <div class="product-card" onclick="toggleProduct(this)" data-product="Motorization">
+        <div class="product-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="12" y="6" width="24" height="36" rx="4"/><line x1="20" y1="6" x2="28" y2="6"/><circle cx="24" cy="36" r="2"/><path d="M20 20 L24 16 L28 20"/><path d="M20 26 L24 22 L28 26"/><path d="M6 16 Q2 24 6 32"/><path d="M42 16 Q46 24 42 32"/></svg></div>
+        <div class="product-name">Motorization</div>
+        <div class="product-desc">Smart home & voice control</div>
+      </div>
+      <div class="product-card" onclick="toggleProduct(this)" data-product="Sheer Shades">
+        <div class="product-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="8" y="4" width="32" height="6" rx="2"/><rect x="10" y="10" width="28" height="32" rx="1" stroke-dasharray="4 3"/><line x1="10" y1="18" x2="38" y2="18" stroke-dasharray="4 3"/><line x1="10" y1="26" x2="38" y2="26" stroke-dasharray="4 3"/><line x1="10" y1="34" x2="38" y2="34" stroke-dasharray="4 3"/></svg></div>
+        <div class="product-name">Sheer Shades</div>
+        <div class="product-desc">Light filtering views</div>
+      </div>
+      <div class="product-card" onclick="toggleProduct(this)" data-product="Banded Shades">
+        <div class="product-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="8" y="4" width="32" height="6" rx="2"/><line x1="8" y1="10" x2="8" y2="42"/><line x1="40" y1="10" x2="40" y2="42"/><rect x="10" y="12" width="28" height="6" rx="1"/><rect x="10" y="22" width="28" height="6" rx="1"/><rect x="10" y="32" width="28" height="6" rx="1"/></svg></div>
+        <div class="product-name">Banded Shades</div>
+        <div class="product-desc">Dual-layer light control</div>
+      </div>
+      <div class="product-card" onclick="toggleProduct(this)" data-product="Smart Drapes">
+        <div class="product-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="4" x2="44" y2="4"/><path d="M8 4 Q10 24 12 44"/><path d="M20 4 Q18 20 20 44"/><path d="M28 4 Q30 20 28 44"/><path d="M40 4 Q38 24 36 44"/><path d="M32 14 Q36 10 40 14"/><path d="M32 10 Q36 6 40 10"/></svg></div>
+        <div class="product-name">Smart Drapes</div>
+        <div class="product-desc">Motorized curtains</div>
+      </div>
+      <div class="product-card" onclick="toggleProduct(this)" data-product="Natural Woven Shades">
+        <div class="product-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="8" y="4" width="32" height="6" rx="2"/><path d="M10 14 H38 M10 20 H38 M10 26 H38 M10 32 H38 M10 38 H38"/><path d="M14 10 V42 M22 10 V42 M30 10 V42 M38 10 V42"/></svg></div>
+        <div class="product-name">Natural Woven</div>
+        <div class="product-desc">Bamboo & organic textures</div>
+      </div>
+      <div class="product-card" onclick="toggleProduct(this)" data-product="Not Sure - Need Help">
+        <div class="product-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="24" cy="24" r="18"/><path d="M18 18 Q18 12 24 12 Q30 12 30 18 Q30 22 24 24 L24 28"/><circle cx="24" cy="34" r="2" fill="currentColor"/></svg></div>
+        <div class="product-name">Not Sure Yet</div>
+        <div class="product-desc">I'd like expert guidance</div>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="goToProject()">Next &rarr;</button>
+    <button class="btn-secondary" onclick="showScreen('contact')">&#8592; Back</button>
+  </div>
+
+  <!-- SCREEN 5: Project Info -->
+  <div class="screen" id="screen-project">
+    <div class="progress">
+      <div class="step-dot done">&#10003;</div>
+      <div class="step-line done"></div>
+      <div class="step-dot done">&#10003;</div>
+      <div class="step-line done"></div>
+      <div class="step-dot done">&#10003;</div>
+      <div class="step-line done"></div>
+      <div class="step-dot done">&#10003;</div>
+      <div class="step-line done"></div>
+      <div class="step-dot active">5</div>
+      <div class="step-line"></div>
+      <div class="step-dot">6</div>
+      <div class="step-line"></div>
+      <div class="step-dot">7</div>
+    </div>
+
+    <div class="screen-title">Project Info</div>
+    <div class="screen-sub">Help us understand your needs</div>
+
+    <div class="section-label">Project Scope</div>
+    <div class="tap-grid" id="scopeGrid">
+      <div class="tap-card" onclick="selectSingle(this, 'scopeGrid')" data-value="New Construction">New Construction</div>
+      <div class="tap-card" onclick="selectSingle(this, 'scopeGrid')" data-value="Replacement">Replacement</div>
+      <div class="tap-card" onclick="selectSingle(this, 'scopeGrid')" data-value="Both" style="grid-column: span 2;">Both</div>
+    </div>
+
+    <div class="section-label">Decision Stage</div>
+    <div class="tap-grid" id="stageGrid">
+      <div class="tap-card" onclick="selectSingle(this, 'stageGrid')" data-value="Just Exploring">Just Exploring</div>
+      <div class="tap-card" onclick="selectSingle(this, 'stageGrid')" data-value="Getting Quotes">Getting Quotes</div>
+      <div class="tap-card" onclick="selectSingle(this, 'stageGrid')" data-value="Ready to Start" style="grid-column: span 2;">Ready to Start</div>
+    </div>
+
+    <div class="section-label">Timeline</div>
+    <div class="tap-grid" id="timelineGrid">
+      <div class="tap-card" onclick="selectSingle(this, 'timelineGrid')" data-value="ASAP">ASAP</div>
+      <div class="tap-card" onclick="selectSingle(this, 'timelineGrid')" data-value="1-3 Months">1-3 Months</div>
+      <div class="tap-card" onclick="selectSingle(this, 'timelineGrid')" data-value="3-6 Months">3-6 Months</div>
+      <div class="tap-card" onclick="selectSingle(this, 'timelineGrid')" data-value="6+ Months">6+ Months</div>
+    </div>
+
+    <div class="section-label">Who Approves Spend?</div>
+    <div class="tap-grid" id="approverGrid">
+      <div class="tap-card" onclick="selectSingle(this, 'approverGrid')" data-value="Board Vote">Board Vote</div>
+      <div class="tap-card" onclick="selectSingle(this, 'approverGrid')" data-value="Manager Decides">Manager Decides</div>
+      <div class="tap-card" onclick="selectSingle(this, 'approverGrid')" data-value="Committee">Committee</div>
+      <div class="tap-card" onclick="selectSingle(this, 'approverGrid')" data-value="Other">Other</div>
+    </div>
+
+    <div class="field">
+      <label for="notes">Notes <span style="font-weight:400;color:#7a6e5f;">(optional)</span></label>
+      <textarea id="notes" placeholder="Special requirements, access instructions, etc." rows="3"></textarea>
+    </div>
+
+    <button class="btn-primary" onclick="goToConfirm()">Review Assessment &rarr;</button>
+    <button class="btn-secondary" onclick="showScreen('property')">&#8592; Back</button>
+  </div>
+
+  <!-- SCREEN 6: Confirm -->
+  <div class="screen" id="screen-confirm">
+    <div class="progress">
+      <div class="step-dot done">&#10003;</div>
+      <div class="step-line done"></div>
+      <div class="step-dot done">&#10003;</div>
+      <div class="step-line done"></div>
+      <div class="step-dot done">&#10003;</div>
+      <div class="step-line done"></div>
+      <div class="step-dot done">&#10003;</div>
+      <div class="step-line done"></div>
+      <div class="step-dot done">&#10003;</div>
+      <div class="step-line done"></div>
+      <div class="step-dot active">6</div>
+      <div class="step-line"></div>
+      <div class="step-dot">7</div>
+    </div>
+
+    <div class="screen-title">Confirm Assessment</div>
+    <div class="screen-sub">Please review your details</div>
+
+    <div class="confirm-box" id="confirmDetails"></div>
+
+    <button class="btn-primary" onclick="submitBooking()">Confirm Assessment</button>
+    <button class="btn-secondary" onclick="showScreen('project')">&#8592; Back</button>
+  </div>
+
+  <!-- SCREEN 7: Thank You -->
+  <div class="screen" id="screen-thanks">
+    <div class="progress">
+      <div class="step-dot done">&#10003;</div>
+      <div class="step-line done"></div>
+      <div class="step-dot done">&#10003;</div>
+      <div class="step-line done"></div>
+      <div class="step-dot done">&#10003;</div>
+      <div class="step-line done"></div>
+      <div class="step-dot done">&#10003;</div>
+      <div class="step-line done"></div>
+      <div class="step-dot done">&#10003;</div>
+      <div class="step-line done"></div>
+      <div class="step-dot done">&#10003;</div>
+      <div class="step-line done"></div>
+      <div class="step-dot done">&#10003;</div>
+    </div>
+
+    <div class="checkmark-circle">
+      <svg viewBox="0 0 40 40"><path class="checkmark-path" d="M10 20 L17 27 L30 13"/></svg>
+    </div>
+    <div class="screen-title">Property Assessment Scheduled!</div>
+
+    <div class="thankyou-box">
+      <div class="thankyou-label">Your Assessment</div>
+      <div class="thankyou-datetime" id="thanksDateTime"></div>
+      <div class="thankyou-detail" id="thanksDetail"></div>
+      <div class="thankyou-products" id="thanksProducts"></div>
+    </div>
+
+    <div class="thankyou-text" id="thanksText"></div>
+
+    <button class="btn-primary" onclick="resetForm()">New Assessment &rarr;</button>
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Block Date Modal -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;display:none;align-items:center;justify-content:center;" id="blockModal">
+  <div style="background:#fff;border-radius:18px;padding:32px 24px;width:90%;max-width:500px;max-height:80vh;overflow-y:auto;">
+    <h2 style="font-size:20px;margin-bottom:16px;">Block Date</h2>
+    <p style="font-size:14px;color:#7a6e5f;margin-bottom:16px;">Block a date so no assessments or consultations can be booked.</p>
+    <div class="field">
+      <label>Date</label>
+      <input type="date" id="blockDate">
+    </div>
+    <div style="display:flex;gap:10px;margin-top:12px;">
+      <button onclick="closeBlockModal()" style="flex:1;padding:12px;border-radius:10px;font-size:15px;font-weight:600;background:#eee;border:none;cursor:pointer;">Cancel</button>
+      <button onclick="addBlock()" style="flex:1;padding:12px;border-radius:10px;font-size:15px;font-weight:600;background:var(--buttercup);border:none;cursor:pointer;">Block</button>
+    </div>
+    <div id="blockedList" style="margin-top:16px;"></div>
+  </div>
+</div>
+
+<!-- Bookings List Modal -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;display:none;align-items:center;justify-content:center;" id="bookingsModal">
+  <div style="background:#fff;border-radius:18px;padding:32px 24px;width:90%;max-width:600px;max-height:80vh;overflow-y:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h2 style="font-size:20px;">Upcoming Assessments</h2>
+      <button onclick="closeBookingsModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#7a6e5f;">&times;</button>
+    </div>
+    <div id="bookingsListContent"></div>
+  </div>
+</div>
+
+<!-- Apps Script Setup Modal -->
+<div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;display:none;align-items:center;justify-content:center;" id="scriptModal">
+  <div style="background:#fff;border-radius:18px;padding:32px 24px;width:90%;max-width:600px;max-height:80vh;overflow-y:auto;">
+    <h2 style="font-size:20px;margin-bottom:12px;">Google Sheets Setup</h2>
+    <p style="font-size:14px;color:#7a6e5f;margin-bottom:16px;line-height:1.5;">
+      This app shares the same Google Sheet as the homeshow booking app.<br><br>
+      <strong>Important:</strong> Both apps read from and write to the same sheet. The "type" column distinguishes between homeshow bookings and condo assessments.<br><br>
+      Sheets URL is already configured in this app.
+    </p>
+    <textarea id="scriptContent" readonly style="width:100%;height:250px;padding:12px;border:2px solid var(--chino);border-radius:10px;font-family:monospace;font-size:11px;line-height:1.4;resize:vertical;background:#f9f9f9;"></textarea>
+    <div style="display:flex;gap:10px;margin-top:12px;">
+      <button onclick="closeScriptModal()" style="flex:1;padding:12px;border-radius:10px;font-size:15px;font-weight:600;background:#eee;border:none;cursor:pointer;">Close</button>
+      <button onclick="copyScript()" style="flex:1;padding:12px;border-radius:10px;font-size:15px;font-weight:600;background:var(--buttercup);border:none;cursor:pointer;">Copy Script</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Config ──
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbzwcl6U0L2rC-2ouQgdwRKjne7_4d0xYQsfohGIwy9bIaUGJRZagvdxHGUNJJewWCoGYQ/exec';
+const START_HOUR = 9;
+const DAYS_AHEAD = 30;
+
+// ── Time Slot Definitions ──
+const TIME_SLOTS = [
+  { key: 'morning', label: 'Morning', range: '9 AM - 12 PM', value: '09:00' },
+  { key: 'afternoon', label: 'Afternoon', range: '12 PM - 5 PM', value: '12:00' }
+];
+
+// ── State ──
+let bookings = JSON.parse(localStorage.getItem('bbb_condo_bookings') || '[]');
+let cloudBookings = [];
+let blockedSlots = JSON.parse(localStorage.getItem('bbb_condo_blocked') || '[]');
+let offlineQueue = JSON.parse(localStorage.getItem('bbb_condo_offline_queue') || '[]');
+let selectedDate = null;
+let selectedTime = null;
+let selectedProducts = new Set();
+let currentBooking = {};
+let isOnline = navigator.onLine;
+
+updateBookingCount();
+updateSyncUI('syncing');
+loadCloudBookings();
+retryOfflineQueue();
+
+// ── Sync Agent: poll Google Sheets every 15s ──
+const SYNC_INTERVAL = 15000;
+let syncTimer = null;
+
+function startSyncAgent() {
+  if (syncTimer) return;
+  syncTimer = setInterval(() => {
+    loadCloudBookings();
+  }, SYNC_INTERVAL);
+}
+
+function stopSyncAgent() {
+  if (syncTimer) {
+    clearInterval(syncTimer);
+    syncTimer = null;
+  }
+}
+
+startSyncAgent();
+
+// Sync on wake + online/offline detection
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    loadCloudBookings();
+    retryOfflineQueue();
+    startSyncAgent();
+  } else {
+    stopSyncAgent();
+  }
+});
+
+window.addEventListener('online', () => {
+  isOnline = true;
+  updateSyncUI('syncing');
+  loadCloudBookings();
+  retryOfflineQueue();
+});
+
+window.addEventListener('offline', () => {
+  isOnline = false;
+  updateSyncUI('offline');
+});
+
+// ── Sync UI ──
+function updateSyncUI(state) {
+  const dot = document.getElementById('syncDot');
+  const label = document.getElementById('syncLabel');
+  const badge = document.getElementById('offlineBadge');
+
+  dot.className = 'sync-dot';
+  badge.classList.remove('visible');
+
+  if (state === 'synced') {
+    label.textContent = 'Synced';
+  } else if (state === 'syncing') {
+    dot.classList.add('syncing');
+    label.textContent = 'Syncing...';
+  } else if (state === 'offline') {
+    dot.classList.add('offline');
+    label.textContent = 'Offline';
+    badge.classList.add('visible');
+  } else if (state === 'error') {
+    dot.classList.add('offline');
+    label.textContent = 'Sync error';
+  }
+
+  // Show offline queue count
+  const queueCount = offlineQueue.length;
+  const statusEl = document.getElementById('adminStatus');
+  if (queueCount > 0) {
+    badge.textContent = queueCount + ' queued';
+    badge.classList.add('visible');
+    statusEl.textContent = queueCount + ' assessment(s) waiting to sync';
+  } else {
+    statusEl.textContent = '';
+  }
+}
+
+// ── Parse formatted time back to raw slot format ──
+function parseFormattedTime(formatted) {
+  if (!formatted) return formatted;
+  if (/^\d{2}:\d{2}$/.test(formatted)) return formatted;
+  var match = formatted.match(/^(\d+)\s*(AM|PM)/i);
+  if (!match) return formatted;
+  var h = parseInt(match[1]);
+  var ampm = match[2].toUpperCase();
+  if (ampm === 'PM' && h < 12) h += 12;
+  if (ampm === 'AM' && h === 12) h = 0;
+  return h.toString().padStart(2, '0') + ':00';
+}
+
+// ── Format helpers ──
+function formatDate(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00');
+  return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+}
+
+function formatTimeSlot(slotValue) {
+  const slot = TIME_SLOTS.find(s => s.value === slotValue);
+  return slot ? slot.label + ' (' + slot.range + ')' : slotValue;
+}
+
+function formatDateShort(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00');
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+// ── Navigation ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function startBooking() {
+  loadCloudBookings();
+  buildDateGrid();
+  selectedDate = null;
+  selectedTime = null;
+  selectedProducts.clear();
+  document.querySelectorAll('#productGrid .product-card').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('#propertyTypeGrid .tap-card').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('#scopeGrid .tap-card, #stageGrid .tap-card, #timelineGrid .tap-card, #approverGrid .tap-card').forEach(c => c.classList.remove('selected'));
+  showScreen('date');
+}
+
+// ── Date Grid ──
+function buildDateGrid() {
+  const grid = document.getElementById('dateGrid');
+  grid.innerHTML = '';
+
+  const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  dayHeaders.forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'day-header';
+    el.textContent = d;
+    grid.appendChild(el);
+  });
+
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  const start = new Date(today);
+  start.setDate(start.getDate() + 1);
+
+  const end = new Date(today);
+  end.setDate(end.getDate() + DAYS_AHEAD);
+
+  const firstDow = start.getDay();
+  for (let i = 0; i < firstDow; i++) {
+    const empty = document.createElement('div');
+    empty.className = 'date-cell';
+    grid.appendChild(empty);
+  }
+
+  const current = new Date(start);
+  while (current <= end) {
+    const dateStr = current.toISOString().slice(0, 10);
+    const dayNum = current.getDate();
+    const monthStr = current.toLocaleDateString('en-US', { month: 'short' });
+
+    const cell = document.createElement('div');
+    const blocked = isDateBlocked(dateStr);
+
+    if (blocked) {
+      cell.className = 'date-cell unavailable';
+    } else {
+      cell.className = 'date-cell available';
+      cell.onclick = () => selectDate(dateStr, cell);
+    }
+
+    cell.innerHTML = dayNum + '<span class="date-month">' + monthStr + '</span>';
+    cell.dataset.date = dateStr;
+    grid.appendChild(cell);
+
+    current.setDate(current.getDate() + 1);
+  }
+}
+
+// CRITICAL: 1 booking = whole day blocked
+// If ANY booking exists on a date (from homeshow OR condo, local OR cloud), block the entire day
+function isDateBlocked(dateStr) {
+  // Check manually blocked dates
+  if (blockedSlots.some(b => b.date === dateStr)) return true;
+
+  // Count ALL bookings on this date (local condo bookings + all cloud bookings from shared sheet)
+  const localCount = bookings.filter(b => b.date === dateStr).length;
+  const cloudCount = cloudBookings.filter(b => b.date === dateStr).length;
+  const totalBookings = localCount + cloudCount;
+
+  // If there's >= 1 booking on this date, block the whole day
+  return totalBookings >= 1;
+}
+
+function isSlotBooked(dateStr, timeStr) {
+  return bookings.some(b => b.date === dateStr && b.time === timeStr) ||
+         cloudBookings.some(b => b.date === dateStr && b.time === timeStr);
+}
+
+function loadCloudBookings() {
+  if (!SHEETS_URL || SHEETS_URL === 'BOOKING_SHEETS_URL_HERE') return;
+  updateSyncUI('syncing');
+  fetch(SHEETS_URL + '?action=list', { redirect: 'follow', credentials: 'omit' })
+    .then(r => r.text())
+    .then(text => {
+      var data = JSON.parse(text);
+      if (Array.isArray(data)) {
+        cloudBookings = data.map(b => ({ ...b, time: parseFormattedTime(b.time) }));
+        updateBookingCount();
+        refreshDateGridIfVisible();
+        isOnline = true;
+        updateSyncUI('synced');
+      }
+    })
+    .catch(err => {
+      console.error('Sync error:', err.message, err);
+      updateSyncUI(navigator.onLine ? 'error' : 'offline');
+    });
+}
+
+function refreshDateGridIfVisible() {
+  const dateScreen = document.getElementById('screen-date');
+  if (!dateScreen.classList.contains('active')) return;
+
+  document.querySelectorAll('.date-cell[data-date]').forEach(cell => {
+    const dateStr = cell.dataset.date;
+    const blocked = isDateBlocked(dateStr);
+
+    if (blocked && cell.classList.contains('available')) {
+      cell.className = 'date-cell unavailable';
+      cell.onclick = null;
+
+      if (selectedDate === dateStr) {
+        selectedDate = null;
+        document.getElementById('btnToTime').disabled = true;
+        document.getElementById('btnToTime').textContent = 'Select a Date';
+        toast('That date is no longer available. Please pick another.');
+      }
+    }
+  });
+}
+
+function selectDate(dateStr, cell) {
+  document.querySelectorAll('.date-cell').forEach(c => c.classList.remove('selected'));
+  cell.classList.add('selected');
+  selectedDate = dateStr;
+  document.getElementById('btnToTime').disabled = false;
+  document.getElementById('btnToTime').textContent = formatDate(dateStr) + ' \u2192';
+}
+
+// ── Time Preference ──
+function goToTime() {
+  if (!selectedDate) return;
+  loadCloudBookings();
+
+  document.getElementById('timeSub').textContent = formatDate(selectedDate);
+  const grid = document.getElementById('timeGrid');
+  const noSlots = document.getElementById('noSlots');
+  grid.innerHTML = '';
+  selectedTime = null;
+  document.getElementById('btnToContact').disabled = true;
+
+  // Re-check: if date is now blocked, show no slots
+  if (isDateBlocked(selectedDate)) {
+    grid.style.display = 'none';
+    noSlots.style.display = 'flex';
+    showScreen('time');
+    return;
+  }
+
+  grid.style.display = 'grid';
+  noSlots.style.display = 'none';
+
+  TIME_SLOTS.forEach(slot => {
+    const booked = isSlotBooked(selectedDate, slot.value);
+
+    const el = document.createElement('div');
+    el.className = 'time-slot' + (booked ? ' booked' : '');
+    el.innerHTML = '<div style="font-size:22px;font-weight:700;">' + slot.label + '</div>' +
+                   '<div style="font-size:16px;margin-top:4px;">' + slot.range + '</div>' +
+                   (booked ? '<div class="slot-label">Booked</div>' : '<div class="slot-label">Available</div>');
+
+    if (!booked) {
+      el.onclick = () => selectTime(slot.value, el);
+    }
+
+    grid.appendChild(el);
+  });
+
+  showScreen('time');
+}
+
+function selectTime(time, slot) {
+  document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+  slot.classList.add('selected');
+  selectedTime = time;
+  document.getElementById('btnToContact').disabled = false;
+}
+
+// ── Tap-card single-select ──
+function selectSingle(card, gridId) {
+  document.querySelectorAll('#' + gridId + ' .tap-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+}
+
+// ── Get selected value from a tap-grid ──
+function getSelectedValue(gridId) {
+  const selected = document.querySelector('#' + gridId + ' .tap-card.selected');
+  return selected ? selected.dataset.value : '';
+}
+
+// ── Contact Info ──
+function goToContact() {
+  if (!selectedTime) return;
+  showScreen('contact');
+  document.getElementById('fname').focus();
+}
+
+// ── Products ──
+function toggleProduct(card) {
+  card.classList.toggle('selected');
+  const product = card.dataset.product;
+  if (selectedProducts.has(product)) {
+    selectedProducts.delete(product);
+  } else {
+    selectedProducts.add(product);
+  }
+}
+
+// ── Property Details ──
+function goToProperty() {
+  const fname = document.getElementById('fname');
+  const lname = document.getElementById('lname');
+  const role = document.getElementById('role');
+  const communityName = document.getElementById('communityName');
+  const email = document.getElementById('email');
+  const phone = document.getElementById('phone');
+  let valid = true;
+
+  if (!fname.value.trim()) { showError('fname'); valid = false; } else { clearError('fname'); }
+  if (!lname.value.trim()) { showError('lname'); valid = false; } else { clearError('lname'); }
+  if (!role.value) { showError('role'); valid = false; } else { clearError('role'); }
+  if (role.value === 'Other') {
+    const otherRole = document.getElementById('otherRole');
+    if (!otherRole.value.trim()) { showError('otherRole'); valid = false; } else { clearError('otherRole'); }
+  }
+  if (!communityName.value.trim()) { showError('communityName'); valid = false; } else { clearError('communityName'); }
+  if (!isValidEmail(email.value.trim())) { showError('email'); valid = false; } else { clearError('email'); }
+  if (!isValidPhone(phone.value)) { showError('phone'); valid = false; } else { clearError('phone'); }
+
+  if (!valid) return;
+  showScreen('property');
+}
+
+// ── Project Info ──
+function goToProject() {
+  const propertyAddress = document.getElementById('propertyAddress');
+  const numUnits = document.getElementById('numUnits');
+  let valid = true;
+
+  const addrVal = propertyAddress.value.trim();
+  const addrHasStreet = /\d+\s+\w/.test(addrVal);
+  const addrHasZip = /\b\d{5}\b/.test(addrVal);
+  if (!addrVal || addrVal.length < 10 || !addrHasStreet || !addrHasZip) {
+    showError('propertyAddress');
+    if (addrVal && !addrHasStreet) document.getElementById('propertyAddress-error').textContent = 'Include a street number (e.g. 123 Main St)';
+    else if (addrVal && !addrHasZip) document.getElementById('propertyAddress-error').textContent = 'Include a 5-digit zip code';
+    else document.getElementById('propertyAddress-error').textContent = 'Please enter the full property address (street, city, state, zip)';
+    valid = false;
+  } else { clearError('propertyAddress'); }
+
+  if (!numUnits.value) { showError('numUnits'); valid = false; } else { clearError('numUnits'); }
+
+  if (!valid) return;
+  showScreen('project');
+}
+
+// ── Validation ──
+function isValidEmail(email) {
+  return /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(email);
+}
+
+function isValidPhone(phone) {
+  return phone.replace(/\D/g, '').length === 10;
+}
+
+function showError(field) {
+  document.getElementById(field).classList.add('error');
+  document.getElementById(field + '-error').style.display = 'block';
+}
+function clearError(field) {
+  document.getElementById(field).classList.remove('error');
+  document.getElementById(field + '-error').style.display = 'none';
+}
+
+function goToConfirm() {
+  const notes = document.getElementById('notes');
+  const roleVal = document.getElementById('role').value;
+  const finalRole = roleVal === 'Other' ? document.getElementById('otherRole').value.trim() : roleVal;
+
+  currentBooking = {
+    fname: document.getElementById('fname').value.trim(),
+    lname: document.getElementById('lname').value.trim(),
+    role: finalRole,
+    community_name: document.getElementById('communityName').value.trim(),
+    management_company: document.getElementById('managementCompany').value.trim(),
+    email: document.getElementById('email').value.trim(),
+    phone: document.getElementById('phone').value.trim(),
+    property_address: document.getElementById('propertyAddress').value.trim(),
+    num_units: document.getElementById('numUnits').value,
+    property_type: getSelectedValue('propertyTypeGrid'),
+    products: Array.from(selectedProducts).join(', '),
+    project_scope: getSelectedValue('scopeGrid'),
+    decision_stage: getSelectedValue('stageGrid'),
+    timeline: getSelectedValue('timelineGrid'),
+    approver: getSelectedValue('approverGrid'),
+    notes: notes.value.trim(),
+    date: selectedDate,
+    time: selectedTime
+  };
+
+  // Build confirmation
+  const details = document.getElementById('confirmDetails');
+  let html = `
+    <div class="confirm-row"><span class="confirm-label">Date</span><span class="confirm-value">${formatDate(selectedDate)}</span></div>
+    <div class="confirm-row"><span class="confirm-label">Time Preference</span><span class="confirm-value">${formatTimeSlot(selectedTime)}</span></div>
+    <div class="confirm-row"><span class="confirm-label">Contact</span><span class="confirm-value">${currentBooking.fname} ${currentBooking.lname}</span></div>
+    <div class="confirm-row"><span class="confirm-label">Role</span><span class="confirm-value">${currentBooking.role}</span></div>
+    <div class="confirm-row"><span class="confirm-label">Community</span><span class="confirm-value">${currentBooking.community_name}</span></div>
+    ${currentBooking.management_company ? `<div class="confirm-row"><span class="confirm-label">Mgmt Company</span><span class="confirm-value">${currentBooking.management_company}</span></div>` : ''}
+    <div class="confirm-row"><span class="confirm-label">Email</span><span class="confirm-value">${currentBooking.email}</span></div>
+    <div class="confirm-row"><span class="confirm-label">Phone</span><span class="confirm-value">${currentBooking.phone}</span></div>
+    <div class="confirm-row"><span class="confirm-label">Address</span><span class="confirm-value">${currentBooking.property_address}</span></div>
+    <div class="confirm-row"><span class="confirm-label">Units</span><span class="confirm-value">${currentBooking.num_units}</span></div>
+    ${currentBooking.property_type ? `<div class="confirm-row"><span class="confirm-label">Property Type</span><span class="confirm-value">${currentBooking.property_type}</span></div>` : ''}
+    ${currentBooking.products ? `<div class="confirm-row"><span class="confirm-label">Products</span><span class="confirm-value">${currentBooking.products}</span></div>` : ''}
+    ${currentBooking.project_scope ? `<div class="confirm-row"><span class="confirm-label">Scope</span><span class="confirm-value">${currentBooking.project_scope}</span></div>` : ''}
+    ${currentBooking.decision_stage ? `<div class="confirm-row"><span class="confirm-label">Decision Stage</span><span class="confirm-value">${currentBooking.decision_stage}</span></div>` : ''}
+    ${currentBooking.timeline ? `<div class="confirm-row"><span class="confirm-label">Timeline</span><span class="confirm-value">${currentBooking.timeline}</span></div>` : ''}
+    ${currentBooking.approver ? `<div class="confirm-row"><span class="confirm-label">Approver</span><span class="confirm-value">${currentBooking.approver}</span></div>` : ''}
+    <div class="confirm-row"><span class="confirm-label">Duration</span><span class="confirm-value">Full Day</span></div>
+  `;
+
+  if (currentBooking.notes) {
+    html += `<div class="confirm-row notes-row"><span class="confirm-label">Notes</span><span class="confirm-value">${currentBooking.notes}</span></div>`;
+  }
+
+  html += `<div style="text-align:center;margin-top:12px;"><span onclick="editField('contact')" style="color:var(--buttercup);font-weight:600;font-size:15px;cursor:pointer;text-decoration:underline;">Edit Details</span></div>`;
+
+  details.innerHTML = html;
+  showScreen('confirm');
+}
+
+// ── Edit from Confirm ──
+function editField(screen) {
+  showScreen(screen);
+}
+
+// ── Submit ──
+function submitBooking() {
+  const submitBtn = document.querySelector('#screen-confirm .btn-primary');
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Checking availability...'; }
+
+  // Fresh sync before submitting to prevent double-booking across devices
+  freshSyncThenSubmit(submitBtn);
+}
+
+function freshSyncThenSubmit(submitBtn) {
+  const restoreBtn = () => {
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Confirm Assessment'; }
+  };
+
+  if (!SHEETS_URL || SHEETS_URL === 'BOOKING_SHEETS_URL_HERE') {
+    doSubmit();
+    restoreBtn();
+    return;
+  }
+
+  fetch(SHEETS_URL + '?action=list', { redirect: 'follow', credentials: 'omit' })
+    .then(r => r.json())
+    .then(data => {
+      if (Array.isArray(data)) {
+        cloudBookings = data.map(b => ({ ...b, time: parseFormattedTime(b.time) }));
+        updateBookingCount();
+      }
+
+      // Re-check: is this day now blocked? (any booking from any source blocks the day)
+      if (isDateBlocked(selectedDate)) {
+        toast('Sorry, this date was just booked on another device! Please pick another date.');
+        restoreBtn();
+        showScreen('date');
+        buildDateGrid();
+        return;
+      }
+
+      doSubmit();
+      restoreBtn();
+    })
+    .catch(() => {
+      // Offline — fall back to local check only
+      if (isDateBlocked(selectedDate)) {
+        toast('That date is no longer available. Please pick another.');
+        restoreBtn();
+        showScreen('date');
+        buildDateGrid();
+        return;
+      }
+      doSubmit();
+      restoreBtn();
+    });
+}
+
+function doSubmit() {
+  const booking = {
+    ...currentBooking,
+    timestamp: new Date().toISOString()
+  };
+
+  bookings.push(booking);
+  localStorage.setItem('bbb_condo_bookings', JSON.stringify(bookings));
+  updateBookingCount();
+
+  // Thank you screen
+  document.getElementById('thanksDateTime').innerHTML = formatDate(selectedDate) + '<br>' + formatTimeSlot(selectedTime);
+  document.getElementById('thanksDetail').innerHTML = 'Full-day on-site property assessment<br>with a commercial specialist';
+  document.getElementById('thanksText').innerHTML = 'A Bumble Bee Blinds commercial specialist will visit <strong>' + currentBooking.community_name + '</strong> to assess your window treatment needs.';
+  if (currentBooking.products) {
+    document.getElementById('thanksProducts').textContent = currentBooking.products;
+  } else {
+    document.getElementById('thanksProducts').textContent = '';
+  }
+
+  // Sync to Google Sheets via POST
+  syncBookingToSheets(booking);
+
+  showScreen('thanks');
+}
+
+// ── Reset ──
+function resetForm() {
+  document.getElementById('fname').value = '';
+  document.getElementById('lname').value = '';
+  document.getElementById('role').value = '';
+  document.getElementById('otherRole').value = '';
+  document.getElementById('otherRoleField').style.display = 'none';
+  document.getElementById('communityName').value = '';
+  document.getElementById('managementCompany').value = '';
+  document.getElementById('email').value = '';
+  document.getElementById('phone').value = '';
+  document.getElementById('propertyAddress').value = '';
+  document.getElementById('numUnits').value = '';
+  document.getElementById('notes').value = '';
+  ['communityName','propertyAddress','numUnits','fname','lname','role','otherRole','email','phone'].forEach(clearError);
+  selectedDate = null;
+  selectedTime = null;
+  selectedProducts.clear();
+  document.querySelectorAll('#productGrid .product-card').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('#propertyTypeGrid .tap-card').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('#scopeGrid .tap-card, #stageGrid .tap-card, #timelineGrid .tap-card, #approverGrid .tap-card').forEach(c => c.classList.remove('selected'));
+  currentBooking = {};
+  showScreen('welcome');
+}
+
+// ── Admin ──
+function toggleAdmin() {
+  document.getElementById('adminBar').classList.toggle('visible');
+}
+
+function updateBookingCount() {
+  const all = new Set();
+  bookings.forEach(b => all.add(b.date + '|' + b.time));
+  cloudBookings.forEach(b => all.add(b.date + '|' + b.time));
+  document.getElementById('bookingCount').textContent = all.size;
+}
+
+function downloadCSV() {
+  if (bookings.length === 0) { toast('No assessments to export'); return; }
+  const headers = ['Timestamp', 'Date', 'Time', 'First Name', 'Last Name', 'Role', 'Community Name', 'Management Company', 'Email', 'Phone', 'Property Address', 'Num Units', 'Property Type', 'Products', 'Project Scope', 'Decision Stage', 'Timeline', 'Approver', 'Notes', 'Duration', 'Type'];
+  const rows = bookings.map(b => [b.timestamp, b.date, formatTimeSlot(b.time), b.fname, b.lname, b.role, b.community_name, b.management_company || '', b.email, b.phone, b.property_address, b.num_units, b.property_type || '', b.products || '', b.project_scope || '', b.decision_stage || '', b.timeline || '', b.approver || '', b.notes || '', 'Full Day', 'condo_assessment']);
+  let csv = headers.join(',') + '\n';
+  rows.forEach(row => { csv += row.map(c => '"' + (c || '').replace(/"/g, '""') + '"').join(',') + '\n'; });
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'bumble-bee-condo-assessments-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('CSV downloaded!');
+}
+
+function confirmClear() {
+  if (confirm('Delete ALL ' + bookings.length + ' assessments? This cannot be undone.')) {
+    bookings = [];
+    localStorage.setItem('bbb_condo_bookings', '[]');
+    updateBookingCount();
+    toast('All assessments cleared');
+  }
+}
+
+// ── Block Date ──
+function showBlockModal() {
+  document.getElementById('blockModal').style.display = 'flex';
+  renderBlockedList();
+}
+function closeBlockModal() {
+  document.getElementById('blockModal').style.display = 'none';
+}
+
+function addBlock() {
+  const date = document.getElementById('blockDate').value;
+  if (!date) { toast('Select a date to block'); return; }
+
+  const exists = blockedSlots.some(b => b.date === date);
+  if (exists) { toast('Already blocked'); return; }
+
+  blockedSlots.push({ date });
+  localStorage.setItem('bbb_condo_blocked', JSON.stringify(blockedSlots));
+  renderBlockedList();
+  toast('Blocked: ' + formatDateShort(date));
+}
+
+function removeBlock(index) {
+  blockedSlots.splice(index, 1);
+  localStorage.setItem('bbb_condo_blocked', JSON.stringify(blockedSlots));
+  renderBlockedList();
+  toast('Block removed');
+}
+
+function renderBlockedList() {
+  const container = document.getElementById('blockedList');
+  if (blockedSlots.length === 0) {
+    container.innerHTML = '<p style="font-size:13px;color:#7a6e5f;">No blocked dates.</p>';
+    return;
+  }
+  container.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:6px;">' +
+    blockedSlots.map((b, i) =>
+      '<span class="blocked-tag">' + formatDateShort(b.date) +
+      ' <span class="remove" onclick="removeBlock(' + i + ')">\u2715</span></span>'
+    ).join('') + '</div>';
+}
+
+// ── Sync to Sheets via POST ──
+function syncBookingToSheets(booking) {
+  if (!SHEETS_URL || SHEETS_URL === 'BOOKING_SHEETS_URL_HERE') return;
+
+  const payload = {
+    action: 'book',
+    timestamp: booking.timestamp,
+    date: booking.date,
+    time: formatTimeSlot(booking.time),
+    fname: booking.fname,
+    lname: booking.lname,
+    role: booking.role,
+    community_name: booking.community_name,
+    management_company: booking.management_company || '',
+    email: booking.email,
+    phone: booking.phone,
+    property_address: booking.property_address,
+    num_units: booking.num_units,
+    property_type: booking.property_type || '',
+    products: booking.products || '',
+    project_scope: booking.project_scope || '',
+    decision_stage: booking.decision_stage || '',
+    timeline: booking.timeline || '',
+    approver: booking.approver || '',
+    notes: booking.notes || '',
+    duration: 'Full Day',
+    type: 'condo_assessment'
+  };
+
+  fetch(SHEETS_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify(payload)
+  })
+  .then(() => {
+    // no-cors gives opaque response — verify via GET after short delay
+    setTimeout(() => {
+      loadCloudBookings();
+    }, 2000);
+  })
+  .catch(() => {
+    // Queue for retry
+    offlineQueue.push(payload);
+    localStorage.setItem('bbb_condo_offline_queue', JSON.stringify(offlineQueue));
+    updateSyncUI(navigator.onLine ? 'error' : 'offline');
+    toast('Assessment saved locally — will sync when connected');
+  });
+}
+
+// ── Offline Queue ──
+function retryOfflineQueue() {
+  if (offlineQueue.length === 0 || !SHEETS_URL || SHEETS_URL === 'BOOKING_SHEETS_URL_HERE') return;
+
+  const queue = [...offlineQueue];
+  let succeeded = 0;
+
+  const processNext = (index) => {
+    if (index >= queue.length) {
+      offlineQueue = offlineQueue.slice(succeeded);
+      localStorage.setItem('bbb_condo_offline_queue', JSON.stringify(offlineQueue));
+      updateSyncUI(offlineQueue.length === 0 ? 'synced' : 'error');
+      if (succeeded > 0) {
+        toast(succeeded + ' queued assessment(s) synced!');
+        setTimeout(loadCloudBookings, 1500);
+      }
+      return;
+    }
+
+    fetch(SHEETS_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(queue[index])
+    })
+    .then(() => {
+      succeeded++;
+      processNext(index + 1);
+    })
+    .catch(() => {
+      offlineQueue = offlineQueue.slice(succeeded);
+      localStorage.setItem('bbb_condo_offline_queue', JSON.stringify(offlineQueue));
+      updateSyncUI('offline');
+    });
+  };
+
+  processNext(0);
+}
+
+// ── Bookings List ──
+function showBookingsModal() {
+  document.getElementById('bookingsModal').style.display = 'flex';
+  renderBookingsList();
+}
+function closeBookingsModal() {
+  document.getElementById('bookingsModal').style.display = 'none';
+}
+
+function renderBookingsList() {
+  const container = document.getElementById('bookingsListContent');
+
+  // Merge local + cloud, deduplicate by date+time+name
+  const allBookings = [];
+  const seen = new Set();
+
+  const addBooking = (b, source) => {
+    const key = (b.date || '') + '|' + (b.time || '') + '|' + (b.fname || '') + '|' + (b.lname || '');
+    if (seen.has(key)) return;
+    seen.add(key);
+    allBookings.push({ ...b, source });
+  };
+
+  bookings.forEach(b => addBooking(b, 'local'));
+  cloudBookings.forEach(b => addBooking(b, 'cloud'));
+
+  // Sort by date + time
+  allBookings.sort((a, b) => {
+    const da = (a.date || '') + (a.time || '');
+    const db = (b.date || '') + (b.time || '');
+    return da.localeCompare(db);
+  });
+
+  if (allBookings.length === 0) {
+    container.innerHTML = '<p style="text-align:center;color:#7a6e5f;padding:24px;">No bookings yet.</p>';
+    return;
+  }
+
+  container.innerHTML = allBookings.map(b => {
+    const dateStr = b.date ? formatDate(b.date) : 'Unknown date';
+    const timeStr = b.time ? formatTimeSlot(b.time) : '';
+    const name = [b.fname, b.lname].filter(Boolean).join(' ') || 'Unknown';
+    const community = b.community_name || b.address || '';
+    const typeLabel = (b.type === 'condo_assessment') ? '<span style="color:var(--buttercup);font-size:11px;font-weight:700;"> CONDO</span>' : (b.type ? '<span style="color:var(--chino);font-size:11px;"> ' + b.type + '</span>' : '');
+    const sourceTag = b.source === 'local' ? ' <span style="color:var(--buttercup);font-size:11px;">(this device)</span>' : '';
+    const details = [b.phone, b.email, b.role].filter(Boolean).join(' &bull; ');
+
+    return '<div class="booking-list-item">' +
+      '<div class="bl-date">' + dateStr + ' &mdash; ' + timeStr + typeLabel + '</div>' +
+      '<div class="bl-name">' + name + sourceTag + '</div>' +
+      (community ? '<div class="bl-detail">' + community + '</div>' : '') +
+      (details ? '<div class="bl-detail">' + details + '</div>' : '') +
+      (b.notes ? '<div class="bl-detail" style="font-style:italic;">Notes: ' + b.notes + '</div>' : '') +
+    '</div>';
+  }).join('');
+}
+
+// ── Apps Script Info ──
+const APPS_SCRIPT = `// Bumble Bee Blinds — Shared Booking Sheet Apps Script
+// This script handles BOTH homeshow bookings AND condo/HOA assessments.
+// The "type" field distinguishes them: "condo_assessment" vs standard bookings.
+//
+// Columns for condo assessments:
+// timestamp | date | time | fname | lname | role | community_name | management_company
+// email | phone | property_address | num_units | property_type | products
+// project_scope | decision_stage | timeline | approver | notes | duration | type
+//
+// The doPost and doGet functions in the homeshow script already handle
+// writing and reading rows. Just ensure the sheet has the extra columns.
+//
+// IMPORTANT: Condo assessments block the ENTIRE day (1 booking = day blocked).
+// The homeshow app allows 2 per day. Each app enforces its own limit client-side,
+// but both read from the same sheet to see ALL bookings.`;
+
+function showScriptModal() {
+  document.getElementById('scriptContent').value = APPS_SCRIPT;
+  document.getElementById('scriptModal').style.display = 'flex';
+}
+function closeScriptModal() {
+  document.getElementById('scriptModal').style.display = 'none';
+}
+function copyScript() {
+  navigator.clipboard.writeText(APPS_SCRIPT).then(() => {
+    toast('Info copied to clipboard!');
+  }).catch(() => {
+    document.getElementById('scriptContent').select();
+    toast('Select all and copy manually');
+  });
+}
+
+// ── Role "Other" toggle ──
+document.getElementById('role').addEventListener('change', function(e) {
+  const otherField = document.getElementById('otherRoleField');
+  if (e.target.value === 'Other') {
+    otherField.style.display = 'block';
+    document.getElementById('otherRole').focus();
+  } else {
+    otherField.style.display = 'none';
+  }
+});
+
+// ── Phone Formatting ──
+document.getElementById('phone').addEventListener('input', function(e) {
+  let val = e.target.value.replace(/\D/g, '');
+  if (val.length > 0) {
+    if (val.length <= 3) val = '(' + val;
+    else if (val.length <= 6) val = '(' + val.slice(0,3) + ') ' + val.slice(3);
+    else val = '(' + val.slice(0,3) + ') ' + val.slice(3,6) + '-' + val.slice(6,10);
+  }
+  e.target.value = val;
+});
+
+// ── Address Helper ──
+document.getElementById('propertyAddress').addEventListener('input', function(e) {
+  const val = e.target.value.trim();
+  const hint = document.getElementById('addressHint');
+
+  if (!val) {
+    hint.style.display = 'none';
+    return;
+  }
+
+  const hasStreet = /\d+\s+\w/.test(val);
+  const hasComma = val.includes(',');
+  const hasState = /\b(FL|Florida)\b/i.test(val);
+  const hasZip = /\b\d{5}\b/.test(val);
+
+  const missing = [];
+  if (!hasStreet) missing.push('street number');
+  if (!hasComma) missing.push('city');
+  if (!hasState) missing.push('state');
+  if (!hasZip) missing.push('zip code');
+
+  if (missing.length > 0 && val.length >= 3) {
+    hint.textContent = 'Add: ' + missing.join(', ');
+    hint.style.display = 'block';
+    hint.style.color = 'var(--buttercup)';
+  } else if (missing.length === 0) {
+    hint.textContent = '\u2713 Looks good!';
+    hint.style.display = 'block';
+    hint.style.color = 'var(--success)';
+    setTimeout(() => { hint.style.color = 'var(--buttercup)'; }, 1500);
+  } else {
+    hint.style.display = 'none';
+  }
+});
+
+// ── Address Normalize ──
+document.getElementById('propertyAddress').addEventListener('blur', function(e) {
+  let val = e.target.value.trim();
+  if (!val) return;
+  val = val.replace(/\b(fl)\b/gi, 'FL');
+  val = val.replace(/\bflorida\b/gi, 'FL');
+  e.target.value = val;
+});
+
+// ── Toast ──
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── Prevent zoom ──
+document.addEventListener('dblclick', e => e.preventDefault());
+</script>
+
+</body>
+</html>

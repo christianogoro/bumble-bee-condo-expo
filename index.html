@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Bumble Bee Blinds — Condo &amp; HOA Expo</title>
+<style>
+  :root {
+    --buttercup: #f0a616;
+    --coffee: #24150e;
+    --gin-fizz: #fff9e5;
+    --chino: #cbc1a0;
+    --success: #4caf50;
+    --error: #e53935;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--gin-fizz);
+    color: var(--coffee);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: var(--coffee);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header h1 {
+    color: var(--buttercup);
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .header .bee-icon { height: 36px; width: auto; }
+  .lead-count {
+    background: var(--buttercup);
+    color: var(--coffee);
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 14px;
+  }
+
+  /* ── Admin Bar ── */
+  .admin-bar {
+    background: var(--coffee);
+    padding: 8px 24px 12px;
+    display: none;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .admin-bar.visible { display: flex; }
+  .admin-btn {
+    background: var(--buttercup);
+    color: var(--coffee);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .admin-btn:active { opacity: 0.8; }
+  .admin-btn.danger { background: var(--error); color: #fff; }
+  .admin-input {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid var(--chino);
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    flex: 1;
+    min-width: 200px;
+  }
+  .admin-input::placeholder { color: var(--chino); }
+  .admin-status {
+    color: var(--buttercup);
+    font-size: 13px;
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  /* ── Container ── */
+  .container {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 16px 24px 20px;
+  }
+
+  /* ── Progress Bar ── */
+  .progress {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 16px;
+  }
+  .step-dot {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--chino);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+    transition: all 0.3s;
+  }
+  .step-dot.active { background: var(--buttercup); color: var(--coffee); transform: scale(1.15); }
+  .step-dot.done { background: var(--success); }
+  .step-line {
+    width: 60px; height: 3px;
+    background: var(--chino);
+    transition: background 0.3s;
+  }
+  .step-line.done { background: var(--success); }
+
+  /* ── Screens ── */
+  .screen { display: none; animation: fadeIn 0.3s ease; }
+  .screen.active { display: flex; flex-direction: column; min-height: calc(100dvh - 92px); }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+  .screen-title {
+    font-size: 34px;
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+  .screen-sub {
+    text-align: center;
+    color: #7a6e5f;
+    font-size: 20px;
+    margin-bottom: 16px;
+  }
+
+  /* ── Form Fields ── */
+  .field { margin-bottom: 10px; }
+  .field label {
+    display: block;
+    font-weight: 600;
+    font-size: 18px;
+    margin-bottom: 4px;
+    color: var(--coffee);
+  }
+  .field input, .field select, .field textarea {
+    width: 100%;
+    padding: 14px 18px;
+    border: 2px solid var(--chino);
+    border-radius: 14px;
+    font-size: 20px;
+    background: #fff;
+    color: var(--coffee);
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+    font-family: inherit;
+  }
+  .field textarea {
+    resize: vertical;
+    min-height: 80px;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    outline: none;
+    border-color: var(--buttercup);
+  }
+  .field input.error, .field select.error {
+    border-color: var(--error);
+  }
+  .error-msg {
+    color: var(--error);
+    font-size: 12px;
+    margin-top: 4px;
+    display: none;
+  }
+
+  /* ── Product Grid ── */
+  .product-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex: 1;
+  }
+  .product-card {
+    background: #fff;
+    border: 2px solid var(--chino);
+    border-radius: 16px;
+    padding: 14px 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .product-card.selected {
+    border-color: var(--buttercup);
+    background: #fef7e0;
+    box-shadow: 0 0 0 2px var(--buttercup);
+  }
+  .product-card:active { transform: scale(0.97); }
+  .product-icon { margin-bottom: 6px; color: var(--coffee); }
+  .product-icon svg { width: 42px; height: 42px; }
+  .product-card.selected .product-icon { color: var(--buttercup); }
+  .product-name { font-weight: 700; font-size: 17px; line-height: 1.2; }
+  .product-desc { font-size: 13px; color: #7a6e5f; margin-top: 4px; }
+
+  /* ── Tap Card Grid (2-col for project info) ── */
+  .tap-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .tap-card {
+    background: #fff;
+    border: 2px solid var(--chino);
+    border-radius: 14px;
+    padding: 14px 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+    -webkit-user-select: none;
+    font-weight: 600;
+    font-size: 17px;
+    color: var(--coffee);
+  }
+  .tap-card.selected {
+    border-color: var(--buttercup);
+    background: #fef7e0;
+    box-shadow: 0 0 0 2px var(--buttercup);
+  }
+  .tap-card:active { transform: scale(0.97); }
+
+  /* ── Buttons ── */
+  .btn-primary {
+    width: 100%;
+    padding: 16px;
+    background: var(--buttercup);
+    color: var(--coffee);
+    border: none;
+    border-radius: 16px;
+    font-size: 22px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+  .btn-primary:active { transform: scale(0.98); opacity: 0.9; }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .btn-secondary {
+    width: 100%;
+    padding: 14px;
+    background: transparent;
+    color: var(--coffee);
+    border: 2px solid var(--chino);
+    border-radius: 16px;
+    font-size: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+
+  /* ── Thank You Screen ── */
+  .promo-box {
+    background: var(--coffee);
+    border-radius: 18px;
+    padding: 28px 24px;
+    text-align: center;
+    margin: 16px 0;
+  }
+  .promo-label {
+    color: var(--buttercup);
+    font-size: 18px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+  .promo-code {
+    color: #fff;
+    font-size: 52px;
+    font-weight: 800;
+    letter-spacing: 4px;
+    margin: 12px 0;
+  }
+  .promo-detail {
+    color: var(--chino);
+    font-size: 18px;
+    line-height: 1.5;
+  }
+
+  .checkmark {
+    width: 80px; height: 80px;
+    margin: 0 auto 16px;
+    background: var(--success);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 40px;
+    color: #fff;
+    animation: pop 0.4s ease;
+  }
+  @keyframes pop { 0% { transform: scale(0); } 60% { transform: scale(1.2); } 100% { transform: scale(1); } }
+
+  .thankyou-text {
+    text-align: center;
+    font-size: 20px;
+    color: #7a6e5f;
+    line-height: 1.5;
+    margin-bottom: 16px;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ── Welcome Screen ── */
+  .welcome-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: calc(100dvh - 60px);
+    text-align: center;
+    padding: 20px 24px;
+  }
+  .welcome-logo { max-width: 340px; width: 60%; margin-bottom: 20px; }
+  .welcome-bee { width: 100px; margin-bottom: 12px; }
+  .welcome-title {
+    font-size: 42px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    color: var(--coffee);
+  }
+  .welcome-sub {
+    font-size: 24px;
+    color: #7a6e5f;
+    margin-bottom: 32px;
+    line-height: 1.4;
+  }
+  .welcome-cta {
+    padding: 24px 80px;
+    font-size: 28px;
+    border-radius: 20px;
+  }
+
+  /* ── Section Label ── */
+  .section-label {
+    font-weight: 700;
+    font-size: 18px;
+    margin-bottom: 6px;
+    color: var(--coffee);
+  }
+
+  /* ── Responsive: Small phones (iPhone SE, etc) ── */
+  @media (max-height: 600px) {
+    .welcome-logo { max-width: 180px; margin-bottom: 10px; }
+    .welcome-title { font-size: 28px; }
+    .welcome-sub { font-size: 16px; margin-bottom: 16px; }
+    .welcome-cta { padding: 14px 50px; font-size: 20px; }
+    .screen-title { font-size: 24px; }
+    .screen-sub { font-size: 14px; margin-bottom: 8px; }
+    .field { margin-bottom: 6px; }
+    .field label { font-size: 14px; margin-bottom: 2px; }
+    .field input, .field select, .field textarea { padding: 10px 14px; font-size: 16px; }
+    .progress { margin-bottom: 8px; }
+    .step-dot { width: 28px; height: 28px; font-size: 13px; }
+    .step-line { width: 40px; }
+    .product-card { padding: 10px 8px; }
+    .product-icon svg { width: 28px; height: 28px; }
+    .product-name { font-size: 13px; }
+    .product-desc { font-size: 10px; }
+    .product-grid { gap: 6px; margin-bottom: 8px; }
+    .tap-grid { gap: 6px; margin-bottom: 8px; }
+    .tap-card { padding: 10px 8px; font-size: 13px; }
+    .section-label { font-size: 14px; margin-bottom: 4px; }
+    .btn-primary { padding: 12px; font-size: 18px; }
+    .btn-secondary { padding: 10px; font-size: 16px; }
+    .promo-box { padding: 16px; margin: 8px 0; }
+    .promo-label { font-size: 12px; }
+    .promo-code { font-size: 36px; }
+    .promo-detail { font-size: 13px; }
+    .thankyou-text { font-size: 14px; }
+    .welcome-bee { width: 60px; }
+    .container { padding: 8px 16px 12px; }
+  }
+
+  /* ── Responsive: Standard tablets / iPad Mini (768px height) ── */
+  @media (min-height: 601px) and (max-height: 850px) {
+    .welcome-logo { max-width: 260px; margin-bottom: 14px; }
+    .welcome-title { font-size: 34px; }
+    .welcome-sub { font-size: 20px; margin-bottom: 24px; }
+    .welcome-cta { padding: 18px 60px; font-size: 24px; }
+    .field input, .field select, .field textarea { padding: 12px 16px; font-size: 18px; }
+    .field label { font-size: 16px; }
+    .product-icon svg { width: 34px; height: 34px; }
+    .product-name { font-size: 15px; }
+    .product-desc { font-size: 12px; }
+    .promo-code { font-size: 44px; }
+    .welcome-bee { width: 80px; }
+    .tap-card { font-size: 15px; padding: 12px 10px; }
+    .section-label { font-size: 16px; }
+  }
+
+  /* ── Responsive: iPad Air / Pro / large tablets (851-1100px) ── */
+  /* Uses the base styles above — already tuned for this range */
+
+  /* ── Responsive: Large laptop screens (1100px+) ── */
+  @media (min-height: 1100px) {
+    .welcome-logo { max-width: 420px; margin-bottom: 32px; }
+    .welcome-title { font-size: 52px; }
+    .welcome-sub { font-size: 28px; margin-bottom: 48px; }
+    .welcome-cta { padding: 28px 100px; font-size: 32px; }
+    .screen-title { font-size: 42px; }
+    .screen-sub { font-size: 24px; margin-bottom: 24px; }
+    .field { margin-bottom: 16px; }
+    .field label { font-size: 22px; margin-bottom: 8px; }
+    .field input, .field select, .field textarea { padding: 20px 22px; font-size: 24px; }
+    .product-card { padding: 24px 16px; }
+    .product-icon svg { width: 56px; height: 56px; }
+    .product-name { font-size: 22px; }
+    .product-desc { font-size: 16px; }
+    .product-grid { gap: 16px; }
+    .tap-grid { gap: 12px; }
+    .tap-card { padding: 20px 16px; font-size: 22px; }
+    .section-label { font-size: 22px; margin-bottom: 8px; }
+    .btn-primary { padding: 22px; font-size: 26px; }
+    .btn-secondary { padding: 18px; font-size: 22px; }
+    .promo-box { padding: 40px 32px; }
+    .promo-label { font-size: 22px; }
+    .promo-code { font-size: 64px; }
+    .promo-detail { font-size: 22px; }
+    .thankyou-text { font-size: 24px; }
+    .welcome-bee { width: 120px; }
+    .container { max-width: 800px; padding: 24px 32px 28px; }
+    .progress { margin-bottom: 24px; }
+    .step-dot { width: 44px; height: 44px; font-size: 20px; }
+    .step-line { width: 80px; height: 4px; }
+  }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--coffee);
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    z-index: 200;
+    transition: transform 0.3s ease;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── Google Sheets Config Modal ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 300;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.visible { display: flex; }
+  .modal {
+    background: #fff;
+    border-radius: 18px;
+    padding: 32px 24px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  .modal h2 { font-size: 20px; margin-bottom: 16px; }
+  .modal p { font-size: 14px; color: #7a6e5f; margin-bottom: 16px; line-height: 1.5; }
+  .modal input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--chino);
+    border-radius: 10px;
+    font-size: 15px;
+    margin-bottom: 12px;
+  }
+  .modal input:focus { outline: none; border-color: var(--buttercup); }
+  .modal-btns { display: flex; gap: 10px; margin-top: 8px; }
+  .modal-btns button { flex: 1; padding: 12px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .modal-btns .cancel { background: #eee; border: none; color: var(--coffee); }
+  .modal-btns .save { background: var(--buttercup); border: none; color: var(--coffee); }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div style="display:flex;align-items:center;gap:10px;">
+    <img src="../homeshow-kiosk/bee-icon.png" class="bee-icon" alt="Bumble Bee Blinds">
+    <h1>BUMBLE BEE BLINDS</h1>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <span class="lead-count" id="leadCount">0</span>
+    <button onclick="toggleAdmin()" style="background:none;border:none;color:var(--chino);font-size:20px;cursor:pointer;">&#9881;</button>
+  </div>
+</div>
+
+<!-- Admin Bar -->
+<div class="admin-bar" id="adminBar">
+  <button class="admin-btn" onclick="downloadCSV()">&#128229; Download CSV</button>
+  <button class="admin-btn" onclick="showSheetsModal()">&#128214; Google Sheets</button>
+  <button class="admin-btn" onclick="editPromoCode()">&#127915; Edit Promo</button>
+  <button class="admin-btn danger" onclick="confirmClear()">&#128465; Clear All</button>
+  <div class="admin-status" id="adminStatus"></div>
+</div>
+
+<!-- Main Content -->
+<div class="container">
+
+  <!-- SCREEN 0: Welcome / Attract -->
+  <div class="screen active" id="screen-welcome">
+    <div class="welcome-screen">
+      <img src="../homeshow-kiosk/logo-stacked.png" class="welcome-logo" alt="Bumble Bee Blinds">
+      <div class="welcome-title">Welcome!</div>
+      <div class="welcome-sub">
+        Tampa Bay's window treatment experts for<br>
+        condos, HOAs &amp; multi-family communities.<br>
+        Sign up for an exclusive expo special!
+      </div>
+      <button class="btn-primary welcome-cta" onclick="startForm()">Get Started</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 1: Contact Info -->
+  <div class="screen" id="screen-contact">
+    <div class="progress">
+      <div class="step-dot active">1</div>
+      <div class="step-line"></div>
+      <div class="step-dot">2</div>
+      <div class="step-line"></div>
+      <div class="step-dot">3</div>
+      <div class="step-line"></div>
+      <div class="step-dot">4</div>
+    </div>
+
+    <div class="screen-title">Contact Info</div>
+    <div class="screen-sub">Tell us about you and your community</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div class="field">
+        <label for="fname">First Name *</label>
+        <input type="text" id="fname" placeholder="First name" autocomplete="given-name" autocapitalize="words">
+        <div class="error-msg" id="fname-error">Please enter your first name</div>
+      </div>
+      <div class="field">
+        <label for="lname">Last Name *</label>
+        <input type="text" id="lname" placeholder="Last name" autocomplete="family-name" autocapitalize="words">
+        <div class="error-msg" id="lname-error">Please enter your last name</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="role">Title / Role *</label>
+      <select id="role">
+        <option value="">Select your role...</option>
+        <option value="Board President">Board President</option>
+        <option value="Board Member">Board Member</option>
+        <option value="Property Manager">Property Manager</option>
+        <option value="Community Manager">Community Manager</option>
+        <option value="Building Manager">Building Manager</option>
+        <option value="Homeowner">Homeowner</option>
+        <option value="Other">Other</option>
+      </select>
+      <div class="error-msg" id="role-error">Please select your role</div>
+    </div>
+
+    <div class="field" id="otherRoleField" style="display:none;">
+      <label for="otherRole">Your Role *</label>
+      <input type="text" id="otherRole" placeholder="Enter your title or role">
+      <div class="error-msg" id="otherRole-error">Please enter your role</div>
+    </div>
+
+    <div class="field">
+      <label for="communityName">Community / Association Name *</label>
+      <input type="text" id="communityName" placeholder="e.g. Bayshore Towers HOA" autocapitalize="words">
+      <div class="error-msg" id="communityName-error">Please enter the community name</div>
+    </div>
+
+    <div class="field">
+      <label for="managementCompany">Management Company <span style="font-weight:400;color:#7a6e5f;">(optional)</span></label>
+      <input type="text" id="managementCompany" placeholder="e.g. FirstService Residential" autocapitalize="words">
+    </div>
+
+    <div class="field">
+      <label for="email">Email *</label>
+      <input type="email" id="email" placeholder="you@email.com" autocomplete="email" inputmode="email">
+      <div class="error-msg" id="email-error">Please enter a valid email (e.g. name@email.com)</div>
+    </div>
+
+    <div class="field">
+      <label for="phone">Phone *</label>
+      <input type="tel" id="phone" placeholder="(813) 555-1234" autocomplete="tel" inputmode="tel">
+      <div class="error-msg" id="phone-error">Please enter a valid 10-digit phone number</div>
+    </div>
+
+    <button class="btn-primary" onclick="goToProperty()">Next &rarr;</button>
+  </div>
+
+  <!-- SCREEN 2: Property Details -->
+  <div class="screen" id="screen-property">
+    <div class="progress">
+      <div class="step-dot done">&#10003;</div>
+      <div class="step-line done"></div>
+      <div class="step-dot active">2</div>
+      <div class="step-line"></div>
+      <div class="step-dot">3</div>
+      <div class="step-line"></div>
+      <div class="step-dot">4</div>
+    </div>
+
+    <div class="screen-title">Property Details</div>
+    <div class="screen-sub">Tell us about your community</div>
+
+    <div class="field">
+      <label for="numUnits">Number of Units *</label>
+      <select id="numUnits">
+        <option value="">Select range...</option>
+        <option value="1-10">1 - 10</option>
+        <option value="11-25">11 - 25</option>
+        <option value="26-50">26 - 50</option>
+        <option value="51-100">51 - 100</option>
+        <option value="101-250">101 - 250</option>
+        <option value="250+">250+</option>
+      </select>
+      <div class="error-msg" id="numUnits-error">Please select the number of units</div>
+    </div>
+
+    <div class="section-label">Property Type</div>
+    <div class="tap-grid" id="propertyTypeGrid">
+      <div class="tap-card" onclick="selectSingle(this, 'propertyTypeGrid')" data-value="Condo">Condo</div>
+      <div class="tap-card" onclick="selectSingle(this, 'propertyTypeGrid')" data-value="Townhome">Townhome</div>
+      <div class="tap-card" onclick="selectSingle(this, 'propertyTypeGrid')" data-value="HOA Community">HOA Community</div>
+      <div class="tap-card" onclick="selectSingle(this, 'propertyTypeGrid')" data-value="Mixed-Use">Mixed-Use</div>
+      <div class="tap-card" onclick="selectSingle(this, 'propertyTypeGrid')" data-value="Senior Living">Senior Living</div>
+      <div class="tap-card" onclick="selectSingle(this, 'propertyTypeGrid')" data-value="Other">Other</div>
+    </div>
+
+    <div class="section-label">Products Interested In <span style="font-weight:400;color:#7a6e5f;">(tap all that apply)</span></div>
+    <div class="product-grid" id="productGrid">
+      <div class="product-card" onclick="toggleProduct(this)" data-product="Shutters">
+        <div class="product-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="6" y="4" width="36" height="40" rx="2"/><line x1="10" y1="12" x2="38" y2="12"/><line x1="10" y1="20" x2="38" y2="20"/><line x1="10" y1="28" x2="38" y2="28"/><line x1="10" y1="36" x2="38" y2="36"/><line x1="24" y1="4" x2="24" y2="44"/></svg></div>
+        <div class="product-name">Shutters</div>
+        <div class="product-desc">Plantation &amp; composite</div>
+      </div>
+      <div class="product-card" onclick="toggleProduct(this)" data-product="Cellular Shades">
+        <div class="product-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="6" y="2" width="36" height="6" rx="1"/><path d="M10 14 L18 8 L26 14 L34 8 L38 11"/><path d="M10 14 L18 20 L26 14 L34 20 L38 17"/><path d="M10 22 L18 28 L26 22 L34 28 L38 25"/><path d="M10 22 L18 16 L26 22 L34 16 L38 19"/><path d="M10 30 L18 36 L26 30 L34 36 L38 33"/><path d="M10 30 L18 24 L26 30 L34 24 L38 27"/><line x1="10" y1="8" x2="10" y2="36"/><line x1="38" y1="8" x2="38" y2="36"/></svg></div>
+        <div class="product-name">Cellular Shades</div>
+        <div class="product-desc">Honeycomb insulation</div>
+      </div>
+      <div class="product-card" onclick="toggleProduct(this)" data-product="Roller Shades">
+        <div class="product-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="8" y="4" width="32" height="8" rx="4"/><rect x="10" y="12" width="28" height="28" rx="1"/><line x1="22" y1="40" x2="26" y2="40"/><circle cx="24" cy="43" r="2"/></svg></div>
+        <div class="product-name">Roller Shades</div>
+        <div class="product-desc">Solar, blackout &amp; more</div>
+      </div>
+      <div class="product-card" onclick="toggleProduct(this)" data-product="Roman Shades">
+        <div class="product-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="6" y="2" width="36" height="6" rx="1"/><line x1="6" y1="8" x2="6" y2="44"/><line x1="42" y1="8" x2="42" y2="44"/><path d="M6 18 Q24 14 42 18"/><path d="M6 28 Q24 24 42 28"/><path d="M6 38 Q24 32 42 38"/><line x1="6" y1="44" x2="42" y2="44"/></svg></div>
+        <div class="product-name">Roman Shades</div>
+        <div class="product-desc">Elegant fabric folds</div>
+      </div>
+      <div class="product-card" onclick="toggleProduct(this)" data-product="Drapery">
+        <div class="product-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="4" x2="44" y2="4"/><path d="M8 4 Q6 24 10 44"/><path d="M16 4 Q12 20 14 44"/><path d="M8 4 Q12 16 16 4"/><path d="M32 4 Q36 20 34 44"/><path d="M40 4 Q42 24 38 44"/><path d="M32 4 Q36 16 40 4"/><circle cx="8" cy="4" r="2" fill="currentColor"/><circle cx="16" cy="4" r="2" fill="currentColor"/><circle cx="32" cy="4" r="2" fill="currentColor"/><circle cx="40" cy="4" r="2" fill="currentColor"/></svg></div>
+        <div class="product-name">Drapery</div>
+        <div class="product-desc">Custom drapes &amp; curtains</div>
+      </div>
+      <div class="product-card" onclick="toggleProduct(this)" data-product="Outdoor Shades">
+        <div class="product-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="38" cy="10" r="5"/><line x1="38" y1="2" x2="38" y2="4"/><line x1="38" y1="16" x2="38" y2="18"/><line x1="30" y1="10" x2="32" y2="10"/><line x1="44" y1="10" x2="46" y2="10"/><rect x="4" y="6" width="28" height="4" rx="1"/><rect x="6" y="10" width="24" height="32" rx="1"/><line x1="6" y1="18" x2="30" y2="18"/><line x1="6" y1="26" x2="30" y2="26"/><line x1="6" y1="34" x2="30" y2="34"/></svg></div>
+        <div class="product-name">Outdoor Shades</div>
+        <div class="product-desc">Lanai &amp; patio solutions</div>
+      </div>
+      <div class="product-card" onclick="toggleProduct(this)" data-product="Motorization">
+        <div class="product-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="12" y="6" width="24" height="36" rx="4"/><line x1="20" y1="6" x2="28" y2="6"/><circle cx="24" cy="36" r="2"/><path d="M20 20 L24 16 L28 20"/><path d="M20 26 L24 22 L28 26"/><path d="M6 16 Q2 24 6 32"/><path d="M42 16 Q46 24 42 32"/></svg></div>
+        <div class="product-name">Motorization</div>
+        <div class="product-desc">Smart home &amp; voice control</div>
+      </div>
+      <div class="product-card" onclick="toggleProduct(this)" data-product="Sheer Shades">
+        <div class="product-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="8" y="4" width="32" height="6" rx="2"/><rect x="10" y="10" width="28" height="32" rx="1" stroke-dasharray="4 3"/><line x1="10" y1="18" x2="38" y2="18" stroke-dasharray="4 3"/><line x1="10" y1="26" x2="38" y2="26" stroke-dasharray="4 3"/><line x1="10" y1="34" x2="38" y2="34" stroke-dasharray="4 3"/></svg></div>
+        <div class="product-name">Sheer Shades</div>
+        <div class="product-desc">Light filtering views</div>
+      </div>
+      <div class="product-card" onclick="toggleProduct(this)" data-product="Banded Shades">
+        <div class="product-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="8" y="4" width="32" height="6" rx="2"/><line x1="8" y1="10" x2="8" y2="42"/><line x1="40" y1="10" x2="40" y2="42"/><rect x="10" y="12" width="28" height="6" rx="1"/><rect x="10" y="22" width="28" height="6" rx="1"/><rect x="10" y="32" width="28" height="6" rx="1"/></svg></div>
+        <div class="product-name">Banded Shades</div>
+        <div class="product-desc">Dual-layer light control</div>
+      </div>
+      <div class="product-card" onclick="toggleProduct(this)" data-product="Smart Drapes">
+        <div class="product-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="4" y1="4" x2="44" y2="4"/><path d="M8 4 Q10 24 12 44"/><path d="M20 4 Q18 20 20 44"/><path d="M28 4 Q30 20 28 44"/><path d="M40 4 Q38 24 36 44"/><path d="M32 14 Q36 10 40 14"/><path d="M32 10 Q36 6 40 10"/></svg></div>
+        <div class="product-name">Smart Drapes</div>
+        <div class="product-desc">Motorized curtains</div>
+      </div>
+      <div class="product-card" onclick="toggleProduct(this)" data-product="Natural Woven Shades">
+        <div class="product-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="8" y="4" width="32" height="6" rx="2"/><path d="M10 14 H38 M10 20 H38 M10 26 H38 M10 32 H38 M10 38 H38"/><path d="M14 10 V42 M22 10 V42 M30 10 V42 M38 10 V42"/></svg></div>
+        <div class="product-name">Natural Woven</div>
+        <div class="product-desc">Bamboo &amp; organic textures</div>
+      </div>
+      <div class="product-card" onclick="toggleProduct(this)" data-product="Not Sure - Need Help">
+        <div class="product-icon"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="24" cy="24" r="18"/><path d="M18 18 Q18 12 24 12 Q30 12 30 18 Q30 22 24 24 L24 28"/><circle cx="24" cy="34" r="2" fill="currentColor"/></svg></div>
+        <div class="product-name">Not Sure Yet</div>
+        <div class="product-desc">I'd like expert guidance</div>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="goToProject()">Next &rarr;</button>
+    <button class="btn-secondary" onclick="showScreen('contact')">&#8592; Back</button>
+  </div>
+
+  <!-- SCREEN 3: Project Info -->
+  <div class="screen" id="screen-project">
+    <div class="progress">
+      <div class="step-dot done">&#10003;</div>
+      <div class="step-line done"></div>
+      <div class="step-dot done">&#10003;</div>
+      <div class="step-line done"></div>
+      <div class="step-dot active">3</div>
+      <div class="step-line"></div>
+      <div class="step-dot">4</div>
+    </div>
+
+    <div class="screen-title">Project Info</div>
+    <div class="screen-sub">Help us understand your needs</div>
+
+    <div class="section-label">Project Scope</div>
+    <div class="tap-grid" id="scopeGrid">
+      <div class="tap-card" onclick="selectSingle(this, 'scopeGrid')" data-value="New Construction">New Construction</div>
+      <div class="tap-card" onclick="selectSingle(this, 'scopeGrid')" data-value="Replacement">Replacement</div>
+      <div class="tap-card" onclick="selectSingle(this, 'scopeGrid')" data-value="Both" style="grid-column: span 2;">Both</div>
+    </div>
+
+    <div class="section-label">Decision Stage</div>
+    <div class="tap-grid" id="stageGrid">
+      <div class="tap-card" onclick="selectSingle(this, 'stageGrid')" data-value="Just Exploring">Just Exploring</div>
+      <div class="tap-card" onclick="selectSingle(this, 'stageGrid')" data-value="Getting Quotes">Getting Quotes</div>
+      <div class="tap-card" onclick="selectSingle(this, 'stageGrid')" data-value="Ready to Start" style="grid-column: span 2;">Ready to Start</div>
+    </div>
+
+    <div class="section-label">Timeline</div>
+    <div class="tap-grid" id="timelineGrid">
+      <div class="tap-card" onclick="selectSingle(this, 'timelineGrid')" data-value="ASAP">ASAP</div>
+      <div class="tap-card" onclick="selectSingle(this, 'timelineGrid')" data-value="1-3 Months">1-3 Months</div>
+      <div class="tap-card" onclick="selectSingle(this, 'timelineGrid')" data-value="3-6 Months">3-6 Months</div>
+      <div class="tap-card" onclick="selectSingle(this, 'timelineGrid')" data-value="6+ Months">6+ Months</div>
+    </div>
+
+    <div class="section-label">Who Approves Spend?</div>
+    <div class="tap-grid" id="approverGrid">
+      <div class="tap-card" onclick="selectSingle(this, 'approverGrid')" data-value="Board Vote">Board Vote</div>
+      <div class="tap-card" onclick="selectSingle(this, 'approverGrid')" data-value="Manager Decides">Manager Decides</div>
+      <div class="tap-card" onclick="selectSingle(this, 'approverGrid')" data-value="Committee">Committee</div>
+      <div class="tap-card" onclick="selectSingle(this, 'approverGrid')" data-value="Other">Other</div>
+    </div>
+
+    <div class="field">
+      <label for="notes">Notes <span style="font-weight:400;color:#7a6e5f;">(optional)</span></label>
+      <textarea id="notes" placeholder="Any additional details about your project..."></textarea>
+    </div>
+
+    <button class="btn-primary" onclick="submitLead()">Submit &rarr;</button>
+    <button class="btn-secondary" onclick="showScreen('property')">&#8592; Back</button>
+  </div>
+
+  <!-- SCREEN 4: Thank You + Promo -->
+  <div class="screen" id="screen-thanks">
+    <div class="progress">
+      <div class="step-dot done">&#10003;</div>
+      <div class="step-line done"></div>
+      <div class="step-dot done">&#10003;</div>
+      <div class="step-line done"></div>
+      <div class="step-dot done">&#10003;</div>
+      <div class="step-line done"></div>
+      <div class="step-dot done">&#10003;</div>
+    </div>
+
+    <div style="text-align:center;margin-bottom:12px;"><img src="../homeshow-kiosk/bee-icon.png" class="welcome-bee" alt=""></div>
+    <div class="screen-title">You're All Set!</div>
+
+    <div class="promo-box">
+      <div class="promo-label">Your Exclusive Expo Special</div>
+      <div class="promo-code" id="promoDisplay">BB185</div>
+      <div class="promo-detail">
+        Mention this code when you schedule<br>
+        your FREE commercial consultation!
+      </div>
+    </div>
+
+    <div class="thankyou-text">
+      A Bumble Bee Blinds commercial specialist will reach out<br>
+      to discuss your community's needs. See you soon!
+    </div>
+
+    <button class="btn-primary" onclick="resetForm()" style="margin-top:8px;">Next Guest &rarr;</button>
+  </div>
+
+</div>
+
+<!-- Toast Notification -->
+<div class="toast" id="toast"></div>
+
+<!-- Google Sheets Modal -->
+<div class="modal-overlay" id="sheetsModal">
+  <div class="modal">
+    <h2>Google Sheets Sync</h2>
+    <p>
+      To sync leads live to Google Sheets, you need a Google Apps Script web app URL.
+      <br><br>
+      <strong>Quick setup:</strong><br>
+      1. Create a Google Sheet with headers: Timestamp, First Name, Last Name, Role, Community, Mgmt Company, Email, Phone, Units, Property Type, Products, Scope, Stage, Timeline, Approver, Notes, Promo<br>
+      2. Go to Extensions &rarr; Apps Script<br>
+      3. Paste the script (tap "Copy Script" below)<br>
+      4. Deploy &rarr; New Deployment &rarr; Web App &rarr; Anyone can access<br>
+      5. Paste the deployment URL below
+    </p>
+    <input type="text" id="sheetsUrl" placeholder="https://script.google.com/macros/s/...">
+    <div class="modal-btns">
+      <button class="cancel" onclick="closeSheetsModal()">Cancel</button>
+      <button class="save" onclick="copyAppsScript()">Copy Script</button>
+      <button class="save" onclick="saveSheetsUrl()">Save URL</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──
+let leads = JSON.parse(localStorage.getItem('bbb_condo_leads') || '[]');
+let selectedProducts = new Set();
+let promoCode = localStorage.getItem('bbb_condo_promo') || 'BB185';
+let sheetsUrl = localStorage.getItem('bbb_condo_sheets_url') || 'https://script.google.com/macros/s/AKfycbwZ1HZNhJHFjk_JoKSN8d4-djYZXXONzCajCBuCwhze5k2ZHDawTpG9NT2Kb4aoKu0/exec';
+let currentLead = {};
+
+updateLeadCount();
+
+// ── Navigation ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function startForm() {
+  showScreen('contact');
+  document.getElementById('fname').focus();
+}
+
+// ── Validation Helpers ──
+function isValidEmail(email) {
+  return /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(email);
+}
+
+function isValidPhone(phone) {
+  const digits = phone.replace(/\D/g, '');
+  return digits.length === 10;
+}
+
+function showError(field) {
+  document.getElementById(field).classList.add('error');
+  document.getElementById(field + '-error').style.display = 'block';
+}
+function clearError(field) {
+  document.getElementById(field).classList.remove('error');
+  const errEl = document.getElementById(field + '-error');
+  if (errEl) errEl.style.display = 'none';
+}
+
+// ── Role dropdown: show/hide Other field ──
+document.getElementById('role').addEventListener('change', function() {
+  const otherField = document.getElementById('otherRoleField');
+  if (this.value === 'Other') {
+    otherField.style.display = 'block';
+    document.getElementById('otherRole').focus();
+  } else {
+    otherField.style.display = 'none';
+    document.getElementById('otherRole').value = '';
+  }
+  clearError('role');
+});
+
+// ── Screen 1 -> Screen 2 ──
+function goToProperty() {
+  const fname = document.getElementById('fname');
+  const lname = document.getElementById('lname');
+  const role = document.getElementById('role');
+  const communityName = document.getElementById('communityName');
+  const email = document.getElementById('email');
+  const phone = document.getElementById('phone');
+  let valid = true;
+
+  if (!fname.value.trim()) { showError('fname'); valid = false; } else { clearError('fname'); }
+  if (!lname.value.trim()) { showError('lname'); valid = false; } else { clearError('lname'); }
+  if (!role.value) { showError('role'); valid = false; } else { clearError('role'); }
+  if (role.value === 'Other') {
+    const otherRole = document.getElementById('otherRole');
+    if (!otherRole.value.trim()) { showError('otherRole'); valid = false; } else { clearError('otherRole'); }
+  }
+  if (!communityName.value.trim()) { showError('communityName'); valid = false; } else { clearError('communityName'); }
+  if (!isValidEmail(email.value.trim())) { showError('email'); valid = false; } else { clearError('email'); }
+  if (!isValidPhone(phone.value)) { showError('phone'); valid = false; } else { clearError('phone'); }
+
+  if (!valid) return;
+
+  const roleValue = role.value === 'Other' ? document.getElementById('otherRole').value.trim() : role.value;
+
+  currentLead = {
+    fname: fname.value.trim(),
+    lname: lname.value.trim(),
+    role: roleValue,
+    community_name: communityName.value.trim(),
+    management_company: document.getElementById('managementCompany').value.trim(),
+    email: email.value.trim(),
+    phone: phone.value.trim()
+  };
+
+  // Reset property screen selections
+  selectedProducts.clear();
+  document.querySelectorAll('#productGrid .product-card').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('#propertyTypeGrid .tap-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('numUnits').value = '';
+
+  showScreen('property');
+}
+
+// ── Tap-card single-select ──
+function selectSingle(card, gridId) {
+  document.querySelectorAll('#' + gridId + ' .tap-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+}
+
+// ── Products multi-select ──
+function toggleProduct(card) {
+  card.classList.toggle('selected');
+  const product = card.dataset.product;
+  if (selectedProducts.has(product)) {
+    selectedProducts.delete(product);
+  } else {
+    selectedProducts.add(product);
+  }
+}
+
+// ── Get selected value from a tap-grid ──
+function getSelectedValue(gridId) {
+  const selected = document.querySelector('#' + gridId + ' .tap-card.selected');
+  return selected ? selected.dataset.value : '';
+}
+
+// ── Screen 2 -> Screen 3 ──
+function goToProject() {
+  const numUnits = document.getElementById('numUnits');
+  let valid = true;
+
+  if (!numUnits.value) { showError('numUnits'); valid = false; } else { clearError('numUnits'); }
+
+  if (!valid) return;
+
+  currentLead.num_units = numUnits.value;
+  currentLead.property_type = getSelectedValue('propertyTypeGrid');
+  currentLead.products = Array.from(selectedProducts).join(', ');
+
+  // Reset project screen selections
+  document.querySelectorAll('#scopeGrid .tap-card, #stageGrid .tap-card, #timelineGrid .tap-card, #approverGrid .tap-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('notes').value = '';
+
+  showScreen('project');
+}
+
+// ── Submit Lead ──
+function submitLead() {
+  currentLead.project_scope = getSelectedValue('scopeGrid');
+  currentLead.decision_stage = getSelectedValue('stageGrid');
+  currentLead.timeline = getSelectedValue('timelineGrid');
+  currentLead.approver = getSelectedValue('approverGrid');
+  currentLead.notes = document.getElementById('notes').value.trim();
+  currentLead.promo = promoCode;
+  currentLead.timestamp = new Date().toISOString();
+
+  leads.push(currentLead);
+  localStorage.setItem('bbb_condo_leads', JSON.stringify(leads));
+  updateLeadCount();
+
+  // Update promo display
+  document.getElementById('promoDisplay').textContent = promoCode;
+
+  // Sync to Google Sheets
+  if (sheetsUrl) {
+    syncToSheets(currentLead);
+  }
+
+  showScreen('thanks');
+}
+
+// ── Reset Form ──
+function resetForm() {
+  document.getElementById('fname').value = '';
+  document.getElementById('lname').value = '';
+  document.getElementById('role').value = '';
+  document.getElementById('otherRole').value = '';
+  document.getElementById('otherRoleField').style.display = 'none';
+  document.getElementById('communityName').value = '';
+  document.getElementById('managementCompany').value = '';
+  document.getElementById('email').value = '';
+  document.getElementById('phone').value = '';
+  document.getElementById('numUnits').value = '';
+  document.getElementById('notes').value = '';
+  ['fname','lname','role','otherRole','communityName','email','phone','numUnits'].forEach(clearError);
+  selectedProducts.clear();
+  document.querySelectorAll('.product-card').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.tap-card').forEach(c => c.classList.remove('selected'));
+  currentLead = {};
+  showScreen('welcome');
+}
+
+// ── Admin ──
+function toggleAdmin() {
+  document.getElementById('adminBar').classList.toggle('visible');
+}
+
+function updateLeadCount() {
+  const count = leads.length;
+  document.getElementById('leadCount').textContent = count;
+}
+
+function downloadCSV() {
+  if (leads.length === 0) { toast('No leads to export'); return; }
+
+  const headers = ['Timestamp', 'First Name', 'Last Name', 'Role', 'Community Name', 'Management Company', 'Email', 'Phone', 'Num Units', 'Property Type', 'Products', 'Project Scope', 'Decision Stage', 'Timeline', 'Approver', 'Notes', 'Promo Code'];
+  const rows = leads.map(l => [
+    l.timestamp,
+    l.fname,
+    l.lname,
+    l.role,
+    l.community_name,
+    l.management_company || '',
+    l.email,
+    l.phone,
+    l.num_units || '',
+    l.property_type || '',
+    l.products || '',
+    l.project_scope || '',
+    l.decision_stage || '',
+    l.timeline || '',
+    l.approver || '',
+    l.notes || '',
+    l.promo
+  ]);
+
+  let csv = headers.join(',') + '\n';
+  rows.forEach(row => {
+    csv += row.map(cell => '"' + (cell || '').replace(/"/g, '""') + '"').join(',') + '\n';
+  });
+
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'bumble-bee-condo-leads-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('CSV downloaded!');
+}
+
+function editPromoCode() {
+  const code = prompt('Enter promo code:', promoCode);
+  if (code && code.trim()) {
+    promoCode = code.trim().toUpperCase();
+    localStorage.setItem('bbb_condo_promo', promoCode);
+    toast('Promo code updated: ' + promoCode);
+  }
+}
+
+function confirmClear() {
+  if (confirm('Delete ALL ' + leads.length + ' leads? This cannot be undone.\n\nMake sure you downloaded the CSV first!')) {
+    leads = [];
+    localStorage.setItem('bbb_condo_leads', '[]');
+    updateLeadCount();
+    toast('All leads cleared');
+  }
+}
+
+// ── Google Sheets Sync ──
+function showSheetsModal() {
+  document.getElementById('sheetsUrl').value = sheetsUrl;
+  document.getElementById('sheetsModal').classList.add('visible');
+}
+function closeSheetsModal() {
+  document.getElementById('sheetsModal').classList.remove('visible');
+}
+
+function saveSheetsUrl() {
+  const url = document.getElementById('sheetsUrl').value.trim();
+  sheetsUrl = url;
+  localStorage.setItem('bbb_condo_sheets_url', url);
+  closeSheetsModal();
+  toast(url ? 'Google Sheets sync enabled!' : 'Google Sheets sync disabled');
+}
+
+function syncToSheets(lead) {
+  const params = new URLSearchParams({
+    timestamp: lead.timestamp,
+    fname: lead.fname,
+    lname: lead.lname,
+    role: lead.role,
+    community_name: lead.community_name,
+    management_company: lead.management_company || '',
+    email: lead.email,
+    phone: lead.phone,
+    num_units: lead.num_units || '',
+    property_type: lead.property_type || '',
+    products: lead.products || '',
+    project_scope: lead.project_scope || '',
+    decision_stage: lead.decision_stage || '',
+    timeline: lead.timeline || '',
+    approver: lead.approver || '',
+    notes: lead.notes || '',
+    promo: lead.promo
+  });
+  fetch(sheetsUrl + '?' + params.toString(), { mode: 'no-cors' }).catch(() => {});
+}
+
+function copyAppsScript() {
+  const script = `function doGet(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  sheet.appendRow([
+    e.parameter.timestamp,
+    e.parameter.fname,
+    e.parameter.lname,
+    e.parameter.role,
+    e.parameter.community_name,
+    e.parameter.management_company,
+    e.parameter.email,
+    e.parameter.phone,
+    e.parameter.num_units,
+    e.parameter.property_type,
+    e.parameter.products,
+    e.parameter.project_scope,
+    e.parameter.decision_stage,
+    e.parameter.timeline,
+    e.parameter.approver,
+    e.parameter.notes,
+    e.parameter.promo
+  ]);
+  return ContentService.createTextOutput('OK');
+}`;
+
+  navigator.clipboard.writeText(script).then(() => {
+    toast('Apps Script copied to clipboard!');
+  }).catch(() => {
+    prompt('Copy this script:', script);
+  });
+}
+
+// ── Phone Formatting ──
+document.getElementById('phone').addEventListener('input', function(e) {
+  let val = e.target.value.replace(/\D/g, '');
+  if (val.length > 0) {
+    if (val.length <= 3) {
+      val = '(' + val;
+    } else if (val.length <= 6) {
+      val = '(' + val.slice(0,3) + ') ' + val.slice(3);
+    } else {
+      val = '(' + val.slice(0,3) + ') ' + val.slice(3,6) + '-' + val.slice(6,10);
+    }
+  }
+  e.target.value = val;
+});
+
+// ── Toast ──
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── Prevent zoom on double-tap ──
+document.addEventListener('dblclick', e => e.preventDefault());
+</script>
+
+</body>
+</html>
