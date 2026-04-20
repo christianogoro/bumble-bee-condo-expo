@@ -1378,8 +1378,37 @@ function isSlotBooked(dateStr, timeStr) {
          cloudBookings.some(b => b.date === dateStr && b.time === timeStr);
 }
 
+// Same remote-block fetcher as homeshow-kiosk/book.html. Pulls farmers-market
+// dates + home-show days + estimate-appointment slots from Apps Script
+// (?action=blocked) and merges into in-memory blockedSlots without touching
+// localStorage (so manual condo admin blocks still persist).
+let _lastRemoteBlocks = [];
+function loadRemoteBlocks() {
+  if (!SHEETS_URL) return;
+  fetch(SHEETS_URL + '?action=blocked', { redirect: 'follow', credentials: 'omit' })
+    .then(r => r.ok ? r.json() : [])
+    .then(remote => {
+      if (!Array.isArray(remote)) return;
+      const priorKeys = new Set(_lastRemoteBlocks.map(b => b.date + '|' + (b.time || '')));
+      blockedSlots = blockedSlots.filter(b => !priorKeys.has(b.date + '|' + (b.time || '')));
+      const existing = new Set(blockedSlots.map(b => b.date + '|' + (b.time || '')));
+      for (const r of remote) {
+        const key = r.date + '|' + (r.time || '');
+        if (!existing.has(key)) {
+          blockedSlots.push({ date: r.date, time: r.time || null });
+          existing.add(key);
+        }
+      }
+      _lastRemoteBlocks = remote;
+      if (typeof refreshDateGridIfVisible === 'function') refreshDateGridIfVisible();
+      if (typeof refreshTimeSlotsIfVisible === 'function') refreshTimeSlotsIfVisible();
+    })
+    .catch(err => console.warn('loadRemoteBlocks failed:', err && err.message));
+}
+
 function loadCloudBookings() {
   if (!SHEETS_URL || SHEETS_URL === 'BOOKING_SHEETS_URL_HERE') return;
+  loadRemoteBlocks();
   updateSyncUI('syncing');
   fetch(SHEETS_URL + '?action=list', { redirect: 'follow', credentials: 'omit' })
     .then(r => r.text())
